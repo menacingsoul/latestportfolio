@@ -8,6 +8,7 @@ import Slider from "react-slick";
 
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
+import Link from 'next/link';
 
 interface Project {
   id: string;
@@ -175,7 +176,7 @@ const Portfolio: React.FC<PortfolioProps> = ({ projects, skills, adarsh }) => {
                   whileHover={{ scale: 0.95 }}
                   whileTap={{ scale: 0.98 }}
                 >
-                  <h4 className="text-xl font-semibold mb-3">{project.name}</h4>
+                  <Link href ={`${project.github}`}><h4 className="text-xl font-semibold mb-3">{project.name}</h4></Link>
                   <p className="text-sm mb-4 line-clamp-1">{project.description}</p>
                   <div className="relative w-full h-96 mb-4 rounded overflow-hidden">
                     <Image src={`${project.image}`} alt={project.name} layout="fill" objectFit="cover" unoptimized={true} />

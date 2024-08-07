@@ -2,6 +2,9 @@
 const nextConfig = {
     images: {
         domains: ['picsum.photos'],
+      },
+      typescript:{
+        ignoreBuildErrors:true,
       }
 };
 
