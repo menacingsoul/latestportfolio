@@ -113,9 +113,14 @@ const Portfolio: React.FC<PortfolioProps> = ({ projects, skills, adarsh }) => {
       />
       <nav className="container mx-auto px-6 py-4 flex justify-between items-center sticky top-0 bg-white dark:bg-gray-900 z-40">
         <h1 className="text-2xl font-bold">Adarsh Kumar</h1>
+        <div className='flex'>
+        
+        <Link href={`${adarsh.resume}`}><div className="bg-gray-200 dark:bg-gray-700 px-3 py-2 my-auto justify-center rounded-full text-sm">Resume</div></Link>
         <Button variant="ghost" size="icon" onClick={toggleDarkMode} className="rounded-full">
           {darkMode ? <Sun className="h-[1.2rem] w-[1.2rem]" /> : <Moon className="h-[1.2rem] w-[1.2rem]" />}
         </Button>
+        </div>
+        
       </nav>
 
       <main className="container mx-auto px-6 py-12">
