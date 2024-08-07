@@ -125,7 +125,7 @@ const Portfolio: React.FC<PortfolioProps> = ({ projects, skills, adarsh }) => {
 
       <main className="container mx-auto px-6 py-12">
         <AnimatedSection>
-          <motion.section className="flex items-center">
+          <motion.section className=" md:flex items-center">
             <motion.div className="mr-8">
               <motion.h2 className="text-4xl font-bold mb-4">
                 Hello, I'm Adarsh
