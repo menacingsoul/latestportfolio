@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/Button";
+import {Loader2} from "lucide-react";
 import { useRouter } from "next/navigation";
 import {
   fetchPortfolioData,
@@ -19,6 +20,7 @@ const AdminDashboard = () => {
   const [projects, setProjects] = useState([]);
   const [skills, setSkills] = useState([]);
   const [adarsh, setAdarsh] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   const [newProject, setNewProject] = useState({
     name: "",
@@ -62,6 +64,7 @@ const AdminDashboard = () => {
         setSkills(skillData.skills);
         setAdarsh(adarshData);
         setNewAdarsh(adarshData);
+        setLoading(false);
       };
 
       loadData();
@@ -76,7 +79,6 @@ const AdminDashboard = () => {
       alert("Incorrect passkey.");
     }
   };
-
 
   const handleAddProject = async () => {
     await addPortfolioItem(newProject);
@@ -197,248 +199,267 @@ const AdminDashboard = () => {
     );
   }
 
-
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
-      <h1 className="text-4xl font-bold mb-8 text-gray-800">Admin Dashboard</h1>
+    <>
+      {loading ? (
+        <div>
+          <div className="fixed inset-0 flex items-center justify-center z-50 bg-white bg-opacity-100">
+            <div className=" cursor-pointer overflow-hidden text-black p-8 ">
+              <Loader2 className="mr-2 h-16 w-16 animate-spin" />
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="p-6 bg-gray-50 min-h-screen">
+          <h1 className="text-4xl font-bold mb-8 text-gray-800">
+            Admin Dashboard
+          </h1>
 
-      {/* Projects Management */}
-      <section className="mb-12">
-        <h2 className="text-3xl font-semibold mb-4 text-gray-700">Projects</h2>
-        <div className="mb-6 space-y-4">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            <input
-              type="text"
-              placeholder="Project Name"
-              value={newProject.name}
-              onChange={(e) =>
-                setNewProject({ ...newProject, name: e.target.value })
-              }
-              className="p-2 border border-gray-300 rounded-md"
-            />
-            <input
-              type="text"
-              placeholder="Description"
-              value={newProject.description}
-              onChange={(e) =>
-                setNewProject({ ...newProject, description: e.target.value })
-              }
-              className="p-2 border border-gray-300 rounded-md"
-            />
-            <div className="flex items-center gap-2">
+          {/* Projects Management */}
+          <section className="mb-12">
+            <h2 className="text-3xl font-semibold mb-4 text-gray-700">
+              Projects
+            </h2>
+            <div className="mb-6 space-y-4">
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                <input
+                  type="text"
+                  placeholder="Project Name"
+                  value={newProject.name}
+                  onChange={(e) =>
+                    setNewProject({ ...newProject, name: e.target.value })
+                  }
+                  className="p-2 border border-gray-300 rounded-md"
+                />
+                <input
+                  type="text"
+                  placeholder="Description"
+                  value={newProject.description}
+                  onChange={(e) =>
+                    setNewProject({
+                      ...newProject,
+                      description: e.target.value,
+                    })
+                  }
+                  className="p-2 border border-gray-300 rounded-md"
+                />
+                <div className="flex items-center gap-2">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => handleUploadImage(e, "project")}
+                    className="p-2 border border-gray-300 rounded-md flex-grow"
+                  />
+                  {uploading && <div>Uploading: {uploadProgress}%</div>}
+                </div>
+                <input
+                  type="text"
+                  placeholder="GitHub URL"
+                  value={newProject.github}
+                  onChange={(e) =>
+                    setNewProject({ ...newProject, github: e.target.value })
+                  }
+                  className="p-2 border border-gray-300 rounded-md"
+                />
+                <input
+                  type="text"
+                  placeholder="Project URL"
+                  value={newProject.url}
+                  onChange={(e) =>
+                    setNewProject({ ...newProject, url: e.target.value })
+                  }
+                  className="p-2 border border-gray-300 rounded-md"
+                />
+              </div>
+              <Button
+                onClick={handleAddProject}
+                className="bg-blue-500 text-white hover:bg-blue-600"
+              >
+                Add Project
+              </Button>
+            </div>
+
+            <div className="space-y-4">
+              {projects.map((project) => (
+                <div
+                  key={project.id}
+                  className="bg-white p-4 border border-gray-200 rounded-md shadow-md"
+                >
+                  <h3 className="text-xl font-semibold text-gray-800">
+                    {project.name}
+                  </h3>
+                  <p className="text-gray-600">{project.description}</p>
+                  <div className="mt-4 flex gap-2">
+                    <Button
+                      onClick={() =>
+                        handleEditProject({ ...project, name: "Updated Name" })
+                      }
+                      className="bg-yellow-500 text-white hover:bg-yellow-600"
+                    >
+                      Edit
+                    </Button>
+                    <Button
+                      onClick={() => handleDeleteProject(project.id)}
+                      className="bg-red-500 text-white hover:bg-red-600"
+                    >
+                      Delete
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* Skills Management */}
+          <section className="mb-12">
+            <h2 className="text-3xl font-semibold mb-4 text-gray-700">
+              Skills
+            </h2>
+            <div className="mb-6 space-y-4">
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                <input
+                  type="text"
+                  placeholder="Skill Name"
+                  value={newSkill.name}
+                  onChange={(e) =>
+                    setNewSkill({ ...newSkill, name: e.target.value })
+                  }
+                  className="p-2 border border-gray-300 rounded-md"
+                />
+                <input
+                  type="text"
+                  placeholder="Image URL"
+                  value={newSkill.image}
+                  onChange={(e) =>
+                    setNewSkill({ ...newSkill, image: e.target.value })
+                  }
+                  className="p-2 border border-gray-300 rounded-md"
+                />
+              </div>
+              <Button
+                onClick={handleAddSkill}
+                className="bg-blue-500 text-white hover:bg-blue-600"
+              >
+                Add Skill
+              </Button>
+            </div>
+
+            <div className="space-y-4">
+              {skills.map((skill) => (
+                <div
+                  key={skill.id}
+                  className="bg-white p-4 border border-gray-200 rounded-md shadow-md flex items-center"
+                >
+                  <h3 className="text-xl font-semibold text-gray-800">
+                    {skill.name}
+                  </h3>
+                  {/* <img src={skill.image || '/default-skill-image.png'} alt={skill.name} className="w-12 h-12 rounded-full ml-4" /> */}
+                  <div className="ml-auto flex gap-2">
+                    <Button
+                      onClick={() =>
+                        handleEditSkill({ ...skill, name: "Updated Skill" })
+                      }
+                      className="bg-yellow-500 text-white hover:bg-yellow-600"
+                    >
+                      Edit
+                    </Button>
+                    <Button
+                      onClick={() => handleDeleteSkill(skill.id)}
+                      className="bg-red-500 text-white hover:bg-red-600"
+                    >
+                      Delete
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* Adarsh Details Management */}
+          <section className="mb-8">
+            <h2 className="text-2xl font-semibold mb-4">Adarsh Details</h2>
+            <div className="bg-white p-6 border border-gray-200 rounded-md shadow-md">
               <input
-                type="file"
-                accept="image/*"
-                onChange={(e) => handleUploadImage(e, "project")}
-                className="p-2 border border-gray-300 rounded-md flex-grow"
+                type="text"
+                placeholder="Tagline"
+                value={newAdarsh.tagline}
+                onChange={(e) =>
+                  setNewAdarsh({ ...newAdarsh, tagline: e.target.value })
+                }
+                className="p-2 border border-gray-300 rounded-md mb-2 w-full"
               />
-              {uploading && <div>Uploading: {uploadProgress}%</div>}
-            </div>
-            <input
-              type="text"
-              placeholder="GitHub URL"
-              value={newProject.github}
-              onChange={(e) =>
-                setNewProject({ ...newProject, github: e.target.value })
-              }
-              className="p-2 border border-gray-300 rounded-md"
-            />
-            <input
-              type="text"
-              placeholder="Project URL"
-              value={newProject.url}
-              onChange={(e) =>
-                setNewProject({ ...newProject, url: e.target.value })
-              }
-              className="p-2 border border-gray-300 rounded-md"
-            />
-          </div>
-          <Button
-            onClick={handleAddProject}
-            className="bg-blue-500 text-white hover:bg-blue-600"
-          >
-            Add Project
-          </Button>
-        </div>
-
-        <div className="space-y-4">
-          {projects.map((project) => (
-            <div
-              key={project.id}
-              className="bg-white p-4 border border-gray-200 rounded-md shadow-md"
-            >
-              <h3 className="text-xl font-semibold text-gray-800">
-                {project.name}
-              </h3>
-              <p className="text-gray-600">{project.description}</p>
-              <div className="mt-4 flex gap-2">
-                <Button
-                  onClick={() =>
-                    handleEditProject({ ...project, name: "Updated Name" })
-                  }
-                  className="bg-yellow-500 text-white hover:bg-yellow-600"
-                >
-                  Edit
-                </Button>
-                <Button
-                  onClick={() => handleDeleteProject(project.id)}
-                  className="bg-red-500 text-white hover:bg-red-600"
-                >
-                  Delete
-                </Button>
+              <textarea
+                placeholder="Bio"
+                value={newAdarsh.bio}
+                onChange={(e) =>
+                  setNewAdarsh({ ...newAdarsh, bio: e.target.value })
+                }
+                className="p-2 border border-gray-300 rounded-md mb-2 w-full"
+              />
+              <div>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => handleUploadImage(e, "adarsh")}
+                  className="p-2 border border-gray-300 rounded-md flex-grow"
+                />
+                {uploading && <div>Uploading: {uploadProgress}%</div>}
               </div>
+              {newAdarsh.image && (
+                <img
+                  src={newAdarsh.image}
+                  alt="Adarsh Image"
+                  className="w-32 h-32 object-cover mb-4"
+                />
+              )}
+
+              <input
+                type="text"
+                placeholder="Email"
+                value={newAdarsh.email}
+                onChange={(e) =>
+                  setNewAdarsh({ ...newAdarsh, email: e.target.value })
+                }
+                className="p-2 border border-gray-300 rounded-md mb-2 w-full"
+              />
+              <input
+                type="text"
+                placeholder="Resume URL"
+                value={newAdarsh.resume}
+                onChange={(e) =>
+                  setNewAdarsh({ ...newAdarsh, resume: e.target.value })
+                }
+                className="p-2 border border-gray-300 rounded-md mb-2 w-full"
+              />
+              <input
+                type="text"
+                placeholder="GitHub URL"
+                value={newAdarsh.github}
+                onChange={(e) =>
+                  setNewAdarsh({ ...newAdarsh, github: e.target.value })
+                }
+                className="p-2 border border-gray-300 rounded-md mb-2 w-full"
+              />
+              <input
+                type="text"
+                placeholder="LinkedIn URL"
+                value={newAdarsh.linkedin}
+                onChange={(e) =>
+                  setNewAdarsh({ ...newAdarsh, linkedin: e.target.value })
+                }
+                className="p-2 border border-gray-300 rounded-md mb-2 w-full"
+              />
+              <Button
+                onClick={handleAdarshChange}
+                className="bg-blue-500 text-white hover:bg-blue-600"
+              >
+                Update Adarsh Details
+              </Button>
             </div>
-          ))}
+          </section>
         </div>
-      </section>
-
-      {/* Skills Management */}
-      <section className="mb-12">
-        <h2 className="text-3xl font-semibold mb-4 text-gray-700">Skills</h2>
-        <div className="mb-6 space-y-4">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            <input
-              type="text"
-              placeholder="Skill Name"
-              value={newSkill.name}
-              onChange={(e) =>
-                setNewSkill({ ...newSkill, name: e.target.value })
-              }
-              className="p-2 border border-gray-300 rounded-md"
-            />
-            <input
-              type="text"
-              placeholder="Image URL"
-              value={newSkill.image}
-              onChange={(e) =>
-                setNewSkill({ ...newSkill, image: e.target.value })
-              }
-              className="p-2 border border-gray-300 rounded-md"
-            />
-          </div>
-          <Button
-            onClick={handleAddSkill}
-            className="bg-blue-500 text-white hover:bg-blue-600"
-          >
-            Add Skill
-          </Button>
-        </div>
-
-        <div className="space-y-4">
-          {skills.map((skill) => (
-            <div
-              key={skill.id}
-              className="bg-white p-4 border border-gray-200 rounded-md shadow-md flex items-center"
-            >
-              <h3 className="text-xl font-semibold text-gray-800">
-                {skill.name}
-              </h3>
-              {/* <img src={skill.image || '/default-skill-image.png'} alt={skill.name} className="w-12 h-12 rounded-full ml-4" /> */}
-              <div className="ml-auto flex gap-2">
-                <Button
-                  onClick={() =>
-                    handleEditSkill({ ...skill, name: "Updated Skill" })
-                  }
-                  className="bg-yellow-500 text-white hover:bg-yellow-600"
-                >
-                  Edit
-                </Button>
-                <Button
-                  onClick={() => handleDeleteSkill(skill.id)}
-                  className="bg-red-500 text-white hover:bg-red-600"
-                >
-                  Delete
-                </Button>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Adarsh Details Management */}
-      <section className="mb-8">
-        <h2 className="text-2xl font-semibold mb-4">Adarsh Details</h2>
-        <div className="bg-white p-6 border border-gray-200 rounded-md shadow-md">
-          <input
-            type="text"
-            placeholder="Tagline"
-            value={newAdarsh.tagline}
-            onChange={(e) =>
-              setNewAdarsh({ ...newAdarsh, tagline: e.target.value })
-            }
-            className="p-2 border border-gray-300 rounded-md mb-2 w-full"
-          />
-          <textarea
-            placeholder="Bio"
-            value={newAdarsh.bio}
-            onChange={(e) =>
-              setNewAdarsh({ ...newAdarsh, bio: e.target.value })
-            }
-            className="p-2 border border-gray-300 rounded-md mb-2 w-full"
-          />
-          <div>
-            <input
-            type="file"
-            accept="image/*"
-            onChange={(e) => handleUploadImage(e, "adarsh")}
-            className="p-2 border border-gray-300 rounded-md flex-grow"
-          />
-          {uploading && <div>Uploading: {uploadProgress}%</div>}
-          
-          </div>
-          {newAdarsh.image && (
-            <img
-              src={newAdarsh.image}
-              alt="Adarsh Image"
-              className="w-32 h-32 object-cover mb-4"
-            />
-          )}
-          
-          <input
-            type="text"
-            placeholder="Email"
-            value={newAdarsh.email}
-            onChange={(e) =>
-              setNewAdarsh({ ...newAdarsh, email: e.target.value })
-            }
-            className="p-2 border border-gray-300 rounded-md mb-2 w-full"
-          />
-          <input
-            type="text"
-            placeholder="Resume URL"
-            value={newAdarsh.resume}
-            onChange={(e) =>
-              setNewAdarsh({ ...newAdarsh, resume: e.target.value })
-            }
-            className="p-2 border border-gray-300 rounded-md mb-2 w-full"
-          />
-          <input
-            type="text"
-            placeholder="GitHub URL"
-            value={newAdarsh.github}
-            onChange={(e) =>
-              setNewAdarsh({ ...newAdarsh, github: e.target.value })
-            }
-            className="p-2 border border-gray-300 rounded-md mb-2 w-full"
-          />
-          <input
-            type="text"
-            placeholder="LinkedIn URL"
-            value={newAdarsh.linkedin}
-            onChange={(e) =>
-              setNewAdarsh({ ...newAdarsh, linkedin: e.target.value })
-            }
-            className="p-2 border border-gray-300 rounded-md mb-2 w-full"
-          />
-          <Button
-            onClick={handleAdarshChange}
-            className="bg-blue-500 text-white hover:bg-blue-600"
-          >
-            Update Adarsh Details
-          </Button>
-        </div>
-      </section>
-    </div>
+      )}
+    </>
   );
 };
 

@@ -37,8 +37,6 @@ const MainPage = () => {
     loadData();
   }, []);
 
-  console.log("profile", profile);
-
   return (
     <>
       {loading ? (

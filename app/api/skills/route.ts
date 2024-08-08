@@ -1,6 +1,6 @@
 // app/api/skills/route.ts
-import { NextResponse } from 'next/server';
-import {prisma} from '../../../utils/db';
+import { NextResponse } from "next/server";
+import { prisma } from "../../../utils/db";
 
 export async function GET() {
   const skills = await prisma.skills.findMany();
@@ -25,5 +25,5 @@ export async function PUT(request: Request) {
 export async function DELETE(request: Request) {
   const { id } = await request.json();
   await prisma.skills.delete({ where: { id } });
-  return NextResponse.json({ message: 'Skill deleted' });
+  return NextResponse.json({ message: "Skill deleted" });
 }

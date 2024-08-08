@@ -147,7 +147,7 @@ const Portfolio: React.FC<PortfolioProps> = ({ projects, skills, adarsh }) => {
                 alt="Adarsh Kumar" 
                 width={200} 
                 height={200} 
-                className="rounded-full" 
+                className="rounded-full"
                 unoptimized={true} 
               />
             </motion.div>

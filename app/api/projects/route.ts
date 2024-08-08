@@ -1,6 +1,6 @@
 // app/api/projects/route.ts
-import { NextResponse } from 'next/server';
-import {prisma} from '../../../utils/db';
+import { NextResponse } from "next/server";
+import { prisma } from "../../../utils/db";
 
 export async function GET() {
   const projects = await prisma.projects.findMany();
@@ -25,5 +25,5 @@ export async function PUT(request: Request) {
 export async function DELETE(request: Request) {
   const { id } = await request.json();
   await prisma.projects.delete({ where: { id } });
-  return NextResponse.json({ message: 'Project deleted' });
+  return NextResponse.json({ message: "Project deleted" });
 }
