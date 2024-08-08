@@ -13,7 +13,7 @@ export async function GET() {
   }
 }
 
-export async function PUT(request: Request) {
+export async function PATCH(request: Request) {
   try {
     const { tagline, bio,image, email, resume, github, linkedin } = await request.json();
     const adarsh = await prisma.adarsh.upsert({

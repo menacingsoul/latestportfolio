@@ -73,7 +73,7 @@ export const fetchPortfolioData = async () => {
   
   export const updateAdarshDetails = async (details: { tagline: string; bio: string; email: string; resume: string; github: string; linkedin: string }) => {
     const response = await fetch(createURL('/api/adarsh'), {
-      method: 'PUT',
+      method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
       },
