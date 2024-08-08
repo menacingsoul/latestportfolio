@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/Button";
-import {Loader2} from "lucide-react";
+import { Loader2, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import {
   fetchPortfolioData,
@@ -15,6 +15,7 @@ import {
   fetchAdarshDetails,
   updateAdarshDetails,
 } from "@/utils/api";
+import Image from "next/image";
 
 const AdminDashboard = () => {
   const [projects, setProjects] = useState([]);
@@ -49,7 +50,7 @@ const AdminDashboard = () => {
   const [imageUrl, setImageUrl] = useState("");
 
   const [passkey, setPasskey] = useState("");
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(e);
 
   const router = useRouter();
 
@@ -285,19 +286,31 @@ const AdminDashboard = () => {
                   key={project.id}
                   className="bg-white p-4 border border-gray-200 rounded-md shadow-md"
                 >
-                  <h3 className="text-xl font-semibold text-gray-800">
-                    {project.name}
-                  </h3>
-                  <p className="text-gray-600">{project.description}</p>
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <h3 className="text-xl font-semibold text-gray-800">
+                        {project.name}
+                      </h3>
+                      <p className="text-gray-600">{project.description}</p>
+                    </div>
+                    <div>
+                      <Image
+                        src={`${project.image}`}
+                        width={300}
+                        height={100}
+                        alt="project image"
+                      />
+                    </div>
+                  </div>
                   <div className="mt-4 flex gap-2">
-                    <Button
+                    {/* <Button
                       onClick={() =>
                         handleEditProject({ ...project, name: "Updated Name" })
                       }
                       className="bg-yellow-500 text-white hover:bg-yellow-600"
                     >
                       Edit
-                    </Button>
+                    </Button> */}
                     <Button
                       onClick={() => handleDeleteProject(project.id)}
                       className="bg-red-500 text-white hover:bg-red-600"
@@ -344,17 +357,17 @@ const AdminDashboard = () => {
               </Button>
             </div>
 
-            <div className="space-y-4">
-              {skills.map((skill) => (
+            <div className="flex flex-wrap gap-2">
+              {/* {skills.map((skill) => (
                 <div
                   key={skill.id}
                   className="bg-white p-4 border border-gray-200 rounded-md shadow-md flex items-center"
                 >
                   <h3 className="text-xl font-semibold text-gray-800">
                     {skill.name}
-                  </h3>
-                  {/* <img src={skill.image || '/default-skill-image.png'} alt={skill.name} className="w-12 h-12 rounded-full ml-4" /> */}
-                  <div className="ml-auto flex gap-2">
+                  </h3> */}
+              {/* <img src={skill.image || '/default-skill-image.png'} alt={skill.name} className="w-12 h-12 rounded-full ml-4" /> */}
+              {/* <div className="ml-auto flex gap-2">
                     <Button
                       onClick={() =>
                         handleEditSkill({ ...skill, name: "Updated Skill" })
@@ -368,6 +381,19 @@ const AdminDashboard = () => {
                       className="bg-red-500 text-white hover:bg-red-600"
                     >
                       Delete
+                    </Button>
+                  </div>
+                </div>
+              ))} */}
+              {skills.map((skill, index) => (
+                <div
+                  key={skill.id}
+                  className="bg-gray-200 px-3 flex text-center py-1 rounded-full text-sm"
+                >
+                  <div className=" my-auto">{skill.name}</div>
+                  <div className=" text-red-400">
+                    <Button onClick={() => handleDeleteSkill(skill.id)}>
+                      <X />
                     </Button>
                   </div>
                 </div>

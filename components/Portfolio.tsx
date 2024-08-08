@@ -1,14 +1,15 @@
-'use client'
-import React, { useEffect } from 'react';
-import { Sun, Moon, Mail, GithubIcon,LinkedinIcon } from 'lucide-react';
+"use client";
+import React, { useEffect, useState } from "react";
+import { Sun, Moon, Mail, GithubIcon, LinkedinIcon } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import Image from 'next/image';
-import { motion, useScroll, useSpring, useInView } from 'framer-motion';
+import Image from "next/image";
+import { motion, useScroll, useSpring, useInView } from "framer-motion";
 import Slider from "react-slick";
+import { sendContactForm } from "@/utils/api";
 
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
-import Link from 'next/link';
+import Link from "next/link";
 
 interface Project {
   id: string;
@@ -41,20 +42,43 @@ interface PortfolioProps {
   adarsh: Adarsh;
 }
 
+const AlertBox: React.FC<{
+  message: string;
+  type: "success" | "error";
+  onClose: () => void;
+}> = ({ message, type, onClose }) => {
+  return (
+    <div
+      className={`fixed bottom-4 right-4 p-4 rounded-md shadow-lg text-white ${
+        type === "success" ? "bg-green-500" : "bg-red-500"
+      }`}
+    >
+      {message}
+      <button onClick={onClose} className="ml-4 text-white hover:text-gray-200">
+        &times;
+      </button>
+    </div>
+  );
+};
+
 const Portfolio: React.FC<PortfolioProps> = ({ projects, skills, adarsh }) => {
   const [darkMode, setDarkMode] = React.useState(false);
+  const [alert, setAlert] = useState<{
+    message: string;
+    type: "success" | "error";
+  } | null>(null);
   const { scrollYProgress } = useScroll();
   const scaleX = useSpring(scrollYProgress, {
     stiffness: 100,
     damping: 30,
-    restDelta: 0.001
+    restDelta: 0.001,
   });
 
   useEffect(() => {
     if (darkMode) {
-      document.documentElement.classList.add('dark');
+      document.documentElement.classList.add("dark");
     } else {
-      document.documentElement.classList.remove('dark');
+      document.documentElement.classList.remove("dark");
     }
   }, [darkMode]);
 
@@ -77,16 +101,43 @@ const Portfolio: React.FC<PortfolioProps> = ({ projects, skills, adarsh }) => {
         settings: {
           slidesToShow: 1,
           slidesToScroll: 1,
-        }
+        },
       },
       {
         breakpoint: 600,
         settings: {
           slidesToShow: 1,
-          slidesToScroll: 1
-        }
-      }
-    ]
+          slidesToScroll: 1,
+        },
+      },
+    ],
+  };
+  const [sending, setSending] = useState(false);
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    setSending(true);
+
+    const form = event.target;
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData.entries());
+
+    try {
+      const result = await sendContactForm(data);
+      setAlert({
+        message: result.message || "Message sent successfully!",
+        type: "success",
+      });
+
+      form.reset();
+      setSending(false);
+    } catch (error) {
+      setAlert({ message: "Failed to send message.", type: "error" });
+    }
+  };
+
+  const handleCloseAlert = () => {
+    setAlert(null);
   };
 
   const AnimatedSection = ({ children }) => {
@@ -113,14 +164,25 @@ const Portfolio: React.FC<PortfolioProps> = ({ projects, skills, adarsh }) => {
       />
       <nav className="container mx-auto px-6 py-4 flex justify-between items-center sticky top-0 bg-white dark:bg-gray-900 z-40">
         <h1 className="text-2xl font-bold">Adarsh Kumar</h1>
-        <div className='flex'>
-        
-        <Link href={`${adarsh.resume}`}><div className="bg-gray-200 dark:bg-gray-700 px-3 py-2 my-auto justify-center rounded-full text-sm">Resume</div></Link>
-        <Button variant="ghost" size="icon" onClick={toggleDarkMode} className="rounded-full">
-          {darkMode ? <Sun className="h-[1.2rem] w-[1.2rem]" /> : <Moon className="h-[1.2rem] w-[1.2rem]" />}
-        </Button>
+        <div className="flex">
+          <Link href={`${adarsh.resume}`}>
+            <div className="bg-gray-200 dark:bg-gray-700 px-3 py-2 my-auto justify-center rounded-full text-sm">
+              Resume
+            </div>
+          </Link>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={toggleDarkMode}
+            className="rounded-full"
+          >
+            {darkMode ? (
+              <Sun className="h-[1.2rem] w-[1.2rem]" />
+            ) : (
+              <Moon className="h-[1.2rem] w-[1.2rem]" />
+            )}
+          </Button>
         </div>
-        
       </nav>
 
       <main className="container mx-auto px-6 py-12">
@@ -130,25 +192,21 @@ const Portfolio: React.FC<PortfolioProps> = ({ projects, skills, adarsh }) => {
               <motion.h2 className="text-4xl font-bold mb-4">
                 Hello, I'm Adarsh
               </motion.h2>
-              <motion.p className="text-xl mb-6">
-                {adarsh.tagline}
-              </motion.p>
-              <motion.p className="mb-6">
-                {adarsh.bio}
-              </motion.p>
+              <motion.p className="text-xl mb-6">{adarsh.tagline}</motion.p>
+              <motion.p className="mb-6">{adarsh.bio}</motion.p>
             </motion.div>
-            <motion.div 
+            <motion.div
               className="flex-shrink-0"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
-              <Image 
+              <Image
                 src={`${adarsh.image}`}
-                alt="Adarsh Kumar" 
-                width={200} 
-                height={200} 
+                alt="Adarsh Kumar"
+                width={200}
+                height={200}
                 className="rounded-full"
-                unoptimized={true} 
+                unoptimized={true}
               />
             </motion.div>
           </motion.section>
@@ -181,10 +239,22 @@ const Portfolio: React.FC<PortfolioProps> = ({ projects, skills, adarsh }) => {
                   whileHover={{ scale: 0.95 }}
                   whileTap={{ scale: 0.98 }}
                 >
-                  <Link href ={`${project.github}`}><h4 className="text-xl font-semibold mb-3">{project.name}</h4></Link>
-                  <p className="text-sm mb-4 line-clamp-1">{project.description}</p>
+                  <Link href={`${project.github}`}>
+                    <h4 className="text-xl font-semibold mb-3">
+                      {project.name}
+                    </h4>
+                  </Link>
+                  <p className="text-sm mb-4 line-clamp-1">
+                    {project.description}
+                  </p>
                   <div className="relative w-full h-96 mb-4 rounded overflow-hidden">
-                    <Image src={`${project.image}`} alt={project.name} layout="fill" objectFit="cover" unoptimized={true} />
+                    <Image
+                      src={`${project.image}`}
+                      alt={project.name}
+                      layout="fill"
+                      objectFit="cover"
+                      unoptimized={true}
+                    />
                   </div>
                 </motion.div>
               </div>
@@ -194,25 +264,121 @@ const Portfolio: React.FC<PortfolioProps> = ({ projects, skills, adarsh }) => {
 
         <AnimatedSection>
           <h3 className="text-2xl font-bold mb-4">Get in Touch</h3>
-          <div className="flex gap-4">
-            <Button variant="ghost" size="icon" asChild>
-              <a href={`mailto:${adarsh.email}`} className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
-                <Mail className="h-[1.2rem] w-[1.2rem]" />
-              </a>
-            </Button>
-            <Button variant="ghost" size="icon" asChild>
-              <a href={adarsh.github} target="_blank" rel="noopener noreferrer" className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
-                <GithubIcon className="h-[1.2rem] w-[1.2rem]" />
-              </a>
-            </Button>
-            <Button variant="ghost" size="icon" asChild>
-              <a href={adarsh.linkedin} target="_blank" rel="noopener noreferrer" className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
-                <LinkedinIcon className="h-[1.2rem] w-[1.2rem]" />
-              </a>
-            </Button>
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="flex flex-col w-full md:w-1/2">
+              <form
+                onSubmit={handleSubmit}
+                className="bg-gray-100 dark:bg-gray-800 p-6 rounded-lg shadow-lg"
+              >
+                <h4 className="text-xl font-semibold mb-4">Contact Me</h4>
+                <div className="mb-4">
+                  <label
+                    htmlFor="name"
+                    className="block text-sm font-medium mb-2"
+                  >
+                    Name
+                  </label>
+                  <input
+                    type="text"
+                    id="name"
+                    name="name"
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  />
+                </div>
+                <div className="mb-4">
+                  <label
+                    htmlFor="email"
+                    className="block text-sm font-medium mb-2"
+                  >
+                    Email
+                  </label>
+                  <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  />
+                </div>
+                <div className="mb-4">
+                  <label
+                    htmlFor="message"
+                    className="block text-sm font-medium mb-2"
+                  >
+                    Message
+                  </label>
+                  <textarea
+                    id="message"
+                    name="message"
+                    required
+                    rows={4}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  className={`px-4 py-2 rounded-md text-white transition-colors ${
+                    sending
+                      ? "bg-blue-300 cursor-not-allowed" // Faded color and disabled cursor
+                      : "bg-blue-500 hover:bg-blue-600" // Regular color and hover effect
+                  }`}
+                  disabled={sending}
+                >
+                  {sending ? "Sending" : "Send"}
+                </button>
+              </form>
+            </div>
+            <div className="hidden md:block">
+              <Image
+                src={"/contact.svg"}
+                height={500}
+                width={500}
+                alt="Contact Illustration"
+              />
+            </div>
+          </div>
+          <div className="flex mt-4 w-full">
+            <div className="flex gap-4">
+              <Button variant="ghost" size="icon" asChild>
+                <a
+                  href={`mailto:${adarsh.email}`}
+                  className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+                >
+                  <Mail className="h-[1.2rem] w-[1.2rem]" />
+                </a>
+              </Button>
+              <Button variant="ghost" size="icon" asChild>
+                <a
+                  href={adarsh.github}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+                >
+                  <GithubIcon className="h-[1.2rem] w-[1.2rem]" />
+                </a>
+              </Button>
+              <Button variant="ghost" size="icon" asChild>
+                <a
+                  href={adarsh.linkedin}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+                >
+                  <LinkedinIcon className="h-[1.2rem] w-[1.2rem]" />
+                </a>
+              </Button>
+            </div>
           </div>
         </AnimatedSection>
       </main>
+      {alert && (
+        <AlertBox
+          message={alert.message}
+          type={alert.type}
+          onClose={handleCloseAlert}
+        />
+      )}
     </div>
   );
 };

@@ -82,4 +82,27 @@ export const fetchPortfolioData = async () => {
     if (!response.ok) throw new Error('Failed to update Adarsh details');
     return response.json();
   };
+
+  export async function sendContactForm(data: { name: string; email: string; message: string }) {
+    try {
+      const response = await fetch(createURL('/api/contact'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+  
+      if (!response.ok) {
+        throw new Error('Failed to send message');
+      }
+  
+      const result = await response.json();
+      return result;
+    } catch (error) {
+      console.error('Error sending contact form:', error);
+      throw error;
+    }
+  }
+  
   
