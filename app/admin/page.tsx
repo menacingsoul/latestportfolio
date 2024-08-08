@@ -50,7 +50,7 @@ const AdminDashboard = () => {
   const [imageUrl, setImageUrl] = useState("");
 
   const [passkey, setPasskey] = useState("");
-  const [isAuthenticated, setIsAuthenticated] = useState(e);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   const router = useRouter();
 
