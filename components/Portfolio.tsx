@@ -156,6 +156,19 @@ const Portfolio: React.FC<PortfolioProps> = ({ projects, skills, adarsh }) => {
     );
   };
 
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: {
+      y: 0,
+      opacity: 1,
+      transition: {
+        type: "spring",
+        stiffness: 100,
+      },
+    },
+  };
+
+
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-white transition-colors duration-300">
       <motion.div
@@ -218,10 +231,11 @@ const Portfolio: React.FC<PortfolioProps> = ({ projects, skills, adarsh }) => {
             {skills.map((skill, index) => (
               <motion.span
                 key={skill.id}
-                className="bg-gray-200 dark:bg-gray-700 px-3 py-1 rounded-full text-sm"
+                className="bg-blue-100 dark:bg-blue-900 px-4 py-2 rounded-full text-sm font-semibold shadow-md hover:shadow-lg transition-shadow duration-300"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: index * 0.1 }}
+                whileTap={{ scale: 0.95 }}
               >
                 {skill.name}
               </motion.span>
@@ -230,45 +244,54 @@ const Portfolio: React.FC<PortfolioProps> = ({ projects, skills, adarsh }) => {
         </AnimatedSection>
 
         <AnimatedSection>
-          <h3 className="text-2xl font-bold mb-6">Projects</h3>
-          <Slider {...settings}>
-            {projects.map((project, index) => (
-              <div key={index} className="px-2">
-                <motion.div
-                  className="bg-gray-100 dark:bg-gray-800 p-6 rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300 h-full"
-                  whileHover={{ scale: 0.95 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  <Link href={`${project.github}`}>
-                    <h4 className="text-xl font-semibold mb-3">
-                      {project.name}
-                    </h4>
-                  </Link>
-                  <p className="text-sm mb-4 line-clamp-1">
-                    {project.description}
-                  </p>
-                  <div className="relative w-full h-96 mb-4 rounded overflow-hidden">
-                    <Image
-                      src={`${project.image}`}
-                      alt={project.name}
-                      layout="fill"
-                      objectFit="cover"
-                      unoptimized={true}
-                    />
-                  </div>
-                </motion.div>
-              </div>
-            ))}
-          </Slider>
+          <motion.h3
+            variants={itemVariants}
+            className="text-2xl font-bold mb-4"
+          >
+            Projects
+          </motion.h3>
+          <motion.div variants={itemVariants}>
+            <Slider {...settings}>
+              {projects.map((project) => (
+                <div key={project.id} className="px-2">
+                  <motion.div
+                    className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 h-full"
+                    whileHover={{ scale: 0.96 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    <Link href={`${project.github}`}>
+                      <h4 className="text-xl font-semibold mb-3">
+                        {project.name}
+                      </h4>
+                    </Link>
+                    <p className="text-sm mb-4 line-clamp-2">
+                      {project.description}
+                    </p>
+                    <div className="relative w-full h-56 mb-4 rounded-lg overflow-hidden">
+                      <Image
+                        src={`${project.image}`}
+                        alt={project.name}
+                        layout="fill"
+                        objectFit="cover"
+                        unoptimized={true}
+                      />
+                    </div>
+                  </motion.div>
+                </div>
+              ))}
+            </Slider>
+          </motion.div>
         </AnimatedSection>
 
         <AnimatedSection>
-          <h3 className="text-2xl font-bold mb-4">Get in Touch</h3>
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex flex-col w-full md:w-1/2">
+        <motion.h3 variants={itemVariants} className="text-2xl font-bold mb-4">
+            Get in Touch
+          </motion.h3>
+          <div className="flex flex-col md:flex-row gap-8">
+            <motion.div variants={itemVariants} className="flex-1">
               <form
                 onSubmit={handleSubmit}
-                className="bg-gray-100 dark:bg-gray-800 p-6 rounded-lg shadow-lg"
+                className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg"
               >
                 <h4 className="text-xl font-semibold mb-4">Contact Me</h4>
                 <div className="mb-4">
@@ -316,60 +339,53 @@ const Portfolio: React.FC<PortfolioProps> = ({ projects, skills, adarsh }) => {
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   />
                 </div>
-                <button
+                <motion.button
                   type="submit"
-                  className={`px-4 py-2 rounded-md text-white transition-colors ${
+                  className={`w-full px-4 py-2 rounded-md text-white transition-all ${
                     sending
-                      ? "bg-blue-300 cursor-not-allowed" // Faded color and disabled cursor
-                      : "bg-blue-500 hover:bg-blue-600" // Regular color and hover effect
+                      ? "bg-blue-300 cursor-not-allowed"
+                      : "bg-blue-500 hover:bg-blue-600"
                   }`}
                   disabled={sending}
+                  whileHover={{ scale: 1.004 }}
+                  whileTap={{ scale: 0.95 }}
                 >
                   {sending ? "Sending" : "Send"}
-                </button>
+                </motion.button>
               </form>
-            </div>
-            <div className="hidden md:block">
+            </motion.div>
+            <motion.div variants={itemVariants} className="flex-1 hidden md:block">
               <Image
                 src={"/contact.svg"}
-                height={500}
-                width={500}
+                height={400}
+                width={400}
                 alt="Contact Illustration"
               />
-            </div>
+            </motion.div>
           </div>
-          <div className="flex mt-4 w-full">
-            <div className="flex gap-4">
-              <Button variant="ghost" size="icon" asChild>
-                <a
-                  href={`mailto:${adarsh.email}`}
-                  className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
-                >
-                  <Mail className="h-[1.2rem] w-[1.2rem]" />
-                </a>
-              </Button>
-              <Button variant="ghost" size="icon" asChild>
-                <a
-                  href={adarsh.github}
+         
+          <motion.div variants={itemVariants} className="flex mt-8 justify-center">
+            <div className="flex gap-6">
+              {[
+                { icon: Mail, href: `mailto:${adarsh.email}` },
+                { icon: GithubIcon, href: adarsh.github },
+                { icon: LinkedinIcon, href: adarsh.linkedin },
+              ].map(({ icon: Icon, href }, index) => (
+                <motion.a
+                  key={index}
+                  href={href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+                  className="text-gray-600 dark:text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors"
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.9 }}
                 >
-                  <GithubIcon className="h-[1.2rem] w-[1.2rem]" />
-                </a>
-              </Button>
-              <Button variant="ghost" size="icon" asChild>
-                <a
-                  href={adarsh.linkedin}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
-                >
-                  <LinkedinIcon className="h-[1.2rem] w-[1.2rem]" />
-                </a>
-              </Button>
+                  <Icon className="h-8 w-8" />
+                </motion.a>
+              ))}
             </div>
-          </div>
+          </motion.div>
+         
         </AnimatedSection>
       </main>
       {alert && (
