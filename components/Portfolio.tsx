@@ -3,9 +3,10 @@ import React, { useEffect, useState } from "react";
 import { Sun, Moon, Mail, GithubIcon, LinkedinIcon } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import Image from "next/image";
-import { motion, useScroll, useSpring, useInView } from "framer-motion";
+import { motion, useScroll, useSpring, useInView, AnimatePresence } from "framer-motion";
 import Slider from "react-slick";
 import { sendContactForm } from "@/utils/api";
+import AnimatedLandscape from "./ui/AnimatedLandscape";
 
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
@@ -60,6 +61,7 @@ const AlertBox: React.FC<{
     </div>
   );
 };
+
 
 const Portfolio: React.FC<PortfolioProps> = ({ projects, skills, adarsh }) => {
   const [darkMode, setDarkMode] = React.useState(false);
@@ -168,19 +170,36 @@ const Portfolio: React.FC<PortfolioProps> = ({ projects, skills, adarsh }) => {
     },
   };
 
+  const pageVariants = {
+    initial: { opacity: 0, y: 20 },
+    in: { opacity: 1, y: 0 },
+    out: { opacity: 0, y: -20 }
+  };
+
+  const pageTransition = {
+    type: "tween",
+    ease: "anticipate",
+    duration: 0.5
+  };
+
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-white transition-colors duration-300">
-      <motion.div
-        className="fixed top-0 left-0 right-0 h-1 bg-blue-500 z-50"
-        style={{ scaleX }}
-      />
-      <nav className="container mx-auto px-6 py-4 flex justify-between items-center sticky top-0 bg-white dark:bg-gray-900 z-40">
-        <h1 className="text-2xl font-bold">Adarsh Kumar</h1>
-        <div className="flex">
+    <div className="relative min-h-screen">
+    <AnimatedLandscape isDarkMode={darkMode} />
+    
+    <motion.div
+      className="fixed top-0 left-0 right-0 h-1 bg-blue-500 z-50"
+      style={{ scaleX }}
+    />
+    
+    <div className="relative z-10">
+      <nav className="sticky top-0 bg-white bg-opacity-80 dark:bg-gray-900 dark:bg-opacity-80 backdrop-filter backdrop-blur-lg z-40">
+        <div className="container mx-auto px-6 py-4 flex justify-between items-center">
+          <h1 className="text-2xl dark:text-white font-bold">Adarsh Kumar</h1>
+          <div className="flex">
           <Link href={`${adarsh.resume}`}>
-            <div className="bg-gray-200 dark:bg-gray-700 px-3 py-2 my-auto justify-center rounded-full text-sm">
-              Resume
+            <div className="bg-gray-200 dark:bg-gray-400 px-3 py-2 my-auto justify-center rounded-full text-sm">
+            Résumé
             </div>
           </Link>
           <Button
@@ -190,27 +209,35 @@ const Portfolio: React.FC<PortfolioProps> = ({ projects, skills, adarsh }) => {
             className="rounded-full"
           >
             {darkMode ? (
-              <Sun className="h-[1.2rem] w-[1.2rem]" />
+              <Sun className="h-[1.2rem] w-[1.2rem] text-white" />
             ) : (
-              <Moon className="h-[1.2rem] w-[1.2rem]" />
+              <Moon className="h-[1.2rem] w-[1.2rem] " />
             )}
           </Button>
+          </div>
         </div>
       </nav>
 
-      <main className="container mx-auto px-6 py-12">
+      <main className="container mx-auto px-6 py-12 relative z-10">
         <AnimatedSection>
-          <motion.section className=" md:flex items-center">
+          <motion.section className="md:flex items-center">
             <motion.div className="mr-8">
-              <motion.h2 className="text-4xl font-bold mb-4">
+              <motion.h2 className="text-4xl dark:text-white font-bold mb-4">
                 Hello, I'm Adarsh
               </motion.h2>
-              <motion.p className="text-xl mb-6">{adarsh.tagline}</motion.p>
-              <motion.p className="mb-6">{adarsh.bio}</motion.p>
+              <motion.p className="text-xl dark:text-gray-200 mb-6">{adarsh.tagline}</motion.p>
+              <motion.p className="mb-6 dark:text-gray-100">{adarsh.bio}</motion.p>
             </motion.div>
             <motion.div
               className="flex-shrink-0"
               whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+
+            </motion.div>
+            <motion.div
+              className="flex-shrink-0"
+              whileHover={{ scale: 1.05, rotate: 5 }}
               whileTap={{ scale: 0.95 }}
             >
               <Image
@@ -226,15 +253,19 @@ const Portfolio: React.FC<PortfolioProps> = ({ projects, skills, adarsh }) => {
         </AnimatedSection>
 
         <AnimatedSection>
-          <h3 className="text-2xl font-bold mb-4">Skills</h3>
+          <h3 className="text-2xl font-bold mb-4 dark:text-white">Skills</h3>
           <motion.div className="flex flex-wrap gap-2">
             {skills.map((skill, index) => (
               <motion.span
                 key={skill.id}
-                className="bg-blue-100 dark:bg-blue-900 px-4 py-2 rounded-full text-sm font-semibold shadow-md hover:shadow-lg transition-shadow duration-300"
+                className="bg-blue-100 dark:bg-blue-900 dark:text-white px-4 py-2 rounded-full text-sm font-semibold shadow-md hover:shadow-lg transition-shadow duration-300"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: index * 0.1 }}
+                whileHover={{
+                  scale: 1.05,
+                  boxShadow: "0px 5px 10px rgba(0, 0, 0, 0.1)"
+                }}
                 whileTap={{ scale: 0.95 }}
               >
                 {skill.name}
@@ -246,7 +277,7 @@ const Portfolio: React.FC<PortfolioProps> = ({ projects, skills, adarsh }) => {
         <AnimatedSection>
           <motion.h3
             variants={itemVariants}
-            className="text-2xl font-bold mb-4"
+            className="text-2xl dark:text-white font-bold mb-4"
           >
             Projects
           </motion.h3>
@@ -256,18 +287,22 @@ const Portfolio: React.FC<PortfolioProps> = ({ projects, skills, adarsh }) => {
                 <div key={project.id} className="px-2">
                   <motion.div
                     className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 h-full"
-                    whileHover={{ scale: 0.96 }}
+                    whileHover={{ scale: 0.98, y: -5 }}
                     whileTap={{ scale: 0.98 }}
                   >
                     <Link href={`${project.github}`}>
-                      <h4 className="text-xl font-semibold mb-3">
+                      <h4 className="text-xl dark:text-white font-semibold mb-3">
                         {project.name}
                       </h4>
                     </Link>
-                    <p className="text-sm mb-4 line-clamp-2">
+                    <p className="text-sm mb-4 dark:text-gray-200 line-clamp-2">
                       {project.description}
                     </p>
-                    <div className="relative w-full h-56 mb-4 rounded-lg overflow-hidden">
+                    <motion.div
+                      className="relative w-full h-56 mb-4 rounded-lg overflow-hidden"
+                      whileHover={{ scale: 1.00 }}
+                      whileTap={{ scale: 0.95 }}
+                    >
                       <Image
                         src={`${project.image}`}
                         alt={project.name}
@@ -275,7 +310,7 @@ const Portfolio: React.FC<PortfolioProps> = ({ projects, skills, adarsh }) => {
                         objectFit="cover"
                         unoptimized={true}
                       />
-                    </div>
+                    </motion.div>
                   </motion.div>
                 </div>
               ))}
@@ -284,7 +319,7 @@ const Portfolio: React.FC<PortfolioProps> = ({ projects, skills, adarsh }) => {
         </AnimatedSection>
 
         <AnimatedSection>
-        <motion.h3 variants={itemVariants} className="text-2xl font-bold mb-4">
+          <motion.h3 variants={itemVariants} className="text-2xl dark:text-white font-bold mb-4">
             Get in Touch
           </motion.h3>
           <div className="flex flex-col md:flex-row gap-8">
@@ -293,11 +328,11 @@ const Portfolio: React.FC<PortfolioProps> = ({ projects, skills, adarsh }) => {
                 onSubmit={handleSubmit}
                 className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg"
               >
-                <h4 className="text-xl font-semibold mb-4">Contact Me</h4>
+                <h4 className="text-xl dark:text-white font-semibold mb-4">Contact Me</h4>
                 <div className="mb-4">
                   <label
                     htmlFor="name"
-                    className="block text-sm font-medium mb-2"
+                    className="block text-sm dark:text-white font-medium mb-2"
                   >
                     Name
                   </label>
@@ -306,13 +341,13 @@ const Portfolio: React.FC<PortfolioProps> = ({ projects, skills, adarsh }) => {
                     id="name"
                     name="name"
                     required
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900  dark:text-white"
                   />
                 </div>
                 <div className="mb-4">
                   <label
                     htmlFor="email"
-                    className="block text-sm font-medium mb-2"
+                    className="block text-sm dark:text-white font-medium mb-2"
                   >
                     Email
                   </label>
@@ -327,7 +362,7 @@ const Portfolio: React.FC<PortfolioProps> = ({ projects, skills, adarsh }) => {
                 <div className="mb-4">
                   <label
                     htmlFor="message"
-                    className="block text-sm font-medium mb-2"
+                    className="block text-sm dark:text-white font-medium mb-2"
                   >
                     Message
                   </label>
@@ -347,18 +382,23 @@ const Portfolio: React.FC<PortfolioProps> = ({ projects, skills, adarsh }) => {
                       : "bg-blue-500 hover:bg-blue-600"
                   }`}
                   disabled={sending}
-                  whileHover={{ scale: 1.004 }}
+                  whileHover={{ scale: 1.003 }}
                   whileTap={{ scale: 0.95 }}
                 >
                   {sending ? "Sending" : "Send"}
                 </motion.button>
               </form>
             </motion.div>
-            <motion.div variants={itemVariants} className="flex-1 hidden md:block">
+            <motion.div
+              variants={itemVariants}
+              className="flex-1 hidden md:block"
+              whileHover={{ scale: 1.00 }}
+              whileTap={{ scale: 0.95 }}
+            >
               <Image
                 src={"/contact.svg"}
-                height={400}
-                width={400}
+                height={600}
+                width={600}
                 alt="Contact Illustration"
               />
             </motion.div>
@@ -376,8 +416,8 @@ const Portfolio: React.FC<PortfolioProps> = ({ projects, skills, adarsh }) => {
                   href={href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-gray-600 dark:text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors"
-                  whileHover={{ scale: 1.03 }}
+                  className="text-gray-100 dark:text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors"
+                  whileHover={{ scale: 1.2, rotate: 5 }}
                   whileTap={{ scale: 0.9 }}
                 >
                   <Icon className="h-8 w-8" />
@@ -385,16 +425,25 @@ const Portfolio: React.FC<PortfolioProps> = ({ projects, skills, adarsh }) => {
               ))}
             </div>
           </motion.div>
-         
         </AnimatedSection>
       </main>
-      {alert && (
-        <AlertBox
-          message={alert.message}
-          type={alert.type}
-          onClose={handleCloseAlert}
-        />
-      )}
+      
+      <AnimatePresence>
+        {alert && (
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 50 }}
+          >
+            <AlertBox
+              message={alert.message}
+              type={alert.type}
+              onClose={handleCloseAlert}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
+      </div>  
     </div>
   );
 };
