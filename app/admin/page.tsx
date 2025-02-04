@@ -1,41 +1,80 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/Button";
-import { Loader2, X } from "lucide-react";
-import { useRouter } from "next/navigation";
+import {
+  Loader2,
+  X,
+  Edit,
+  Plus,
+  Trash2,
+  Save,
+  ImagePlus,
+  Lock,
+  Unlock,
+} from "lucide-react";
 import {
   fetchPortfolioData,
   fetchSkillData,
+  fetchAdarshDetails,
+  addPortfolioItem,
+  updatePortfolioItem,
+  deletePortfolioItem,
   addSkill,
   updateSkill,
   deleteSkill,
-  addPortfolioItem,
-  deletePortfolioItem,
-  updatePortfolioItem,
-  fetchAdarshDetails,
   updateAdarshDetails,
 } from "@/utils/api";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 
-const AdminDashboard = () => {
-  const [projects, setProjects] = useState([]);
-  const [skills, setSkills] = useState([]);
-  const [adarsh, setAdarsh] = useState(null);
+// TypeScript Interfaces
+interface Project {
+  id?: string;
+  name: string;
+  description: string;
+  image: string;
+  github: string;
+  url: string;
+}
+
+interface Skill {
+  id?: string;
+  name: string;
+  image: string;
+}
+
+interface AdarshDetails {
+  tagline: string;
+  bio: string;
+  email: string;
+  image: string;
+  resume: string;
+  github: string;
+  linkedin: string;
+}
+
+const AdminDashboard: React.FC = () => {
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [skills, setSkills] = useState<Skill[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const [newProject, setNewProject] = useState({
+  // Form States
+  const [newProject, setNewProject] = useState<Project>({
     name: "",
     description: "",
     image: "",
     github: "",
     url: "",
   });
-  const [editProject, setEditProject] = useState(null);
+  const [editProject, setEditProject] = useState<Project | null>(null);
 
-  const [newSkill, setNewSkill] = useState({ name: "", image: "" });
-  const [editSkill, setEditSkill] = useState(null);
+  const [newSkill, setNewSkill] = useState<Skill>({
+    name: "",
+    image: "",
+  });
+  const [editSkill, setEditSkill] = useState<Skill | null>(null);
 
-  const [newAdarsh, setNewAdarsh] = useState({
+  const [newAdarsh, setNewAdarsh] = useState<AdarshDetails>({
     tagline: "",
     bio: "",
     email: "",
@@ -45,277 +84,332 @@ const AdminDashboard = () => {
     linkedin: "",
   });
 
+  // Upload and Authentication States
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [imageUrl, setImageUrl] = useState("");
-
   const [passkey, setPasskey] = useState("");
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(
+    () =>
+      typeof window !== "undefined" &&
+      localStorage.getItem("isAuthenticated") === "true"
+  );
 
   const router = useRouter();
 
+  // Data Fetching
   useEffect(() => {
-    if (isAuthenticated) {
-      const loadData = async () => {
-        const projectData = await fetchPortfolioData();
-        const skillData = await fetchSkillData();
-        const adarshData = await fetchAdarshDetails();
+    const fetchData = async () => {
+      if (isAuthenticated) {
+        try {
+          const [projectResponse, skillResponse, adarshResponse] =
+            await Promise.all([
+              fetchPortfolioData(),
+              fetchSkillData(),
+              fetchAdarshDetails(),
+            ]);
 
-        setProjects(projectData.projects);
-        setSkills(skillData.skills);
-        setAdarsh(adarshData);
-        setNewAdarsh(adarshData);
-        setLoading(false);
-      };
+          setProjects(projectResponse.projects);
+          setSkills(skillResponse.skills);
+          setNewAdarsh(adarshResponse);
+          setLoading(false);
+        } catch (error) {
+          console.error("Data fetch error:", error);
+          handleLogout();
+        }
+      }
+    };
 
-      loadData();
-    }
+    fetchData();
   }, [isAuthenticated]);
 
+  // Authentication Handlers
   const handlePasskeySubmit = () => {
     const correctPasskey = process.env.NEXT_PUBLIC_ADMIN_PASSKEY;
     if (passkey === correctPasskey) {
       setIsAuthenticated(true);
+      localStorage.setItem("isAuthenticated", "true");
     } else {
       alert("Incorrect passkey.");
     }
   };
 
-  const handleAddProject = async () => {
-    await addPortfolioItem(newProject);
-    router.refresh();
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    localStorage.removeItem("isAuthenticated");
+    setPasskey("");
   };
 
-  const handleEditProject = async (project) => {
-    await updatePortfolioItem(project);
-    router.refresh();
-  };
-
-  const handleDeleteProject = async (id) => {
-    await deletePortfolioItem(id);
-    router.refresh();
-  };
-
-  const handleAddSkill = async () => {
-    await addSkill(newSkill);
-    router.refresh();
-  };
-
-  const handleEditSkill = async (skill) => {
-    await updateSkill(skill);
-    router.refresh();
-  };
-
-  const handleDeleteSkill = async (id) => {
-    await deleteSkill(id);
-    router.refresh();
-  };
-
-  const handleAdarshChange = async () => {
-    await updateAdarshDetails(newAdarsh);
-    router.refresh();
-  };
-
-  // Handle image upload
+  // Image Upload Handler
   const handleUploadImage = async (
     event: React.ChangeEvent<HTMLInputElement>,
-    field: "project" | "skill" | "adarsh" = "project"
+    type: "project" | "skill" | "adarsh" = "project"
   ) => {
-    if (event.target.files && event.target.files[0]) {
-      setUploading(true);
-      setUploadProgress(0);
-      const file = event.target.files[0];
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append(
-        "upload_preset",
-        process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || ""
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append(
+      "upload_preset",
+      process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || ""
+    );
+
+    try {
+      const response = await fetch(
+        `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload`,
+        { method: "POST", body: formData }
       );
 
-      const xhr = new XMLHttpRequest();
+      const data = await response.json();
+      const imageUrl = data.secure_url;
 
-      xhr.upload.addEventListener("progress", (event) => {
-        if (event.lengthComputable) {
-          const percentComplete = (event.loaded / event.total) * 100;
-          setUploadProgress(percentComplete);
-        }
-      });
-
-      xhr.upload.addEventListener("load", () => {
-        setUploadProgress(100);
-      });
-
-      xhr.addEventListener("load", () => {
-        if (xhr.status === 200) {
-          const response = JSON.parse(xhr.responseText);
-          const imageUrl = response.secure_url;
-          setUploading(false);
-
-          if (field === "project") {
-            setNewProject((prev) => ({ ...prev, image: imageUrl }));
-          } else if (field === "skill") {
-            setNewSkill((prev) => ({ ...prev, image: imageUrl }));
-          } else if (field === "adarsh") {
-            setNewAdarsh((prev) => ({ ...prev, image: imageUrl }));
-          }
-        } else {
-          alert("Failed to upload image.");
-          setUploading(false);
-        }
-      });
-
-      xhr.addEventListener("error", () => {
-        alert("Failed to upload image.");
-        setUploading(false);
-      });
-
-      xhr.open(
-        "POST",
-        `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload`
-      );
-      xhr.send(formData);
+      switch (type) {
+        case "project":
+          editProject
+            ? setEditProject({ ...editProject, image: imageUrl })
+            : setNewProject({ ...newProject, image: imageUrl });
+          break;
+        case "skill":
+          editSkill
+            ? setEditSkill({ ...editSkill, image: imageUrl })
+            : setNewSkill({ ...newSkill, image: imageUrl });
+          break;
+        case "adarsh":
+          setNewAdarsh({ ...newAdarsh, image: imageUrl });
+          break;
+      }
+      setUploading(false);
+    } catch (error) {
+      console.error("Upload failed", error);
+      alert("Image upload failed");
+      setUploading(false);
     }
   };
 
+  // Project Handlers
+  const handleAddProject = async () => {
+    try {
+      await addPortfolioItem(newProject);
+      setNewProject({
+        name: "",
+        description: "",
+        image: "",
+        github: "",
+        url: "",
+      });
+      router.refresh();
+    } catch (error) {
+      console.error("Add project failed", error);
+    }
+  };
+
+  const handleUpdateProject = async () => {
+    if (!editProject) return;
+    try {
+      await updatePortfolioItem(editProject);
+      setEditProject(null);
+      router.refresh();
+    } catch (error) {
+      console.error("Update project failed", error);
+    }
+  };
+
+  const handleDeleteProject = async (id: string) => {
+    try {
+      await deletePortfolioItem(id);
+      router.refresh();
+    } catch (error) {
+      console.error("Delete project failed", error);
+    }
+  };
+
+  // Skill Handlers
+  const handleAddSkill = async () => {
+    try {
+      await addSkill(newSkill);
+      setNewSkill({ name: "", image: "" });
+      router.refresh();
+    } catch (error) {
+      console.error("Add skill failed", error);
+    }
+  };
+
+  const handleUpdateSkill = async () => {
+    if (!editSkill) return;
+    try {
+      await updateSkill(editSkill);
+      setEditSkill(null);
+      router.refresh();
+    } catch (error) {
+      console.error("Update skill failed", error);
+    }
+  };
+
+  const handleDeleteSkill = async (id: string) => {
+    try {
+      await deleteSkill(id);
+      router.refresh();
+    } catch (error) {
+      console.error("Delete skill failed", error);
+    }
+  };
+
+  // Adarsh Details Handler
+  const handleUpdateAdarshDetails = async () => {
+    try {
+      await updateAdarshDetails(newAdarsh);
+      router.refresh();
+    } catch (error) {
+      console.error("Update Adarsh details failed", error);
+    }
+  };
+
+  // Authentication Render
   if (!isAuthenticated) {
     return (
-      <div className="p-6 bg-gray-50 min-h-screen flex items-center justify-center">
-        <div className="bg-white p-6 border border-gray-200 rounded-md shadow-md max-w-sm w-full">
-          <h1 className="text-2xl font-bold mb-4">Enter Passkey</h1>
-          <input
-            type="password"
-            value={passkey}
-            onChange={(e) => setPasskey(e.target.value)}
-            placeholder="Enter passkey"
-            className="p-2 border border-gray-300 rounded-md mb-4 w-full"
-          />
-          <Button
-            onClick={handlePasskeySubmit}
-            className="bg-blue-500 text-white hover:bg-blue-600 w-full"
-          >
-            Submit
-          </Button>
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <div className="bg-white p-8 rounded-xl shadow-2xl w-full max-w-md">
+          <h2 className="text-3xl font-bold mb-6 text-center text-gray-800">
+            Admin Access
+          </h2>
+          <div className="space-y-4">
+            <input
+              type="password"
+              value={passkey}
+              onChange={(e) => setPasskey(e.target.value)}
+              placeholder="Enter admin passkey"
+              className="w-full p-3 border border-gray-300 rounded-lg"
+            />
+            <Button
+              onClick={handlePasskeySubmit}
+              className="w-full bg-blue-600 text-white py-3 rounded-lg"
+            >
+              Access Dashboard
+            </Button>
+          </div>
         </div>
       </div>
     );
   }
 
+  // Main Dashboard Render
   return (
-    <>
+    <div className="min-h-screen bg-gray-50 p-8">
       {loading ? (
-        <div>
-          <div className="fixed inset-0 flex items-center justify-center z-50 bg-white bg-opacity-100">
-            <div className=" cursor-pointer overflow-hidden text-black p-8 ">
-              <Loader2 className="mr-2 h-16 w-16 animate-spin" />
-            </div>
-          </div>
+        <div className="flex justify-center items-center h-full">
+          <Loader2 className="animate-spin" />
         </div>
       ) : (
-        <div className="p-6 bg-gray-50 min-h-screen">
-          <h1 className="text-4xl font-bold mb-8 text-gray-800">
-            Admin Dashboard
-          </h1>
-
-          {/* Projects Management */}
+        <>
+          {/* Projects Section */}
           <section className="mb-12">
-            <h2 className="text-3xl font-semibold mb-4 text-gray-700">
-              Projects
-            </h2>
-            <div className="mb-6 space-y-4">
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-3xl font-semibold">Projects</h2>
+              <Button
+                onClick={() => setEditProject(null)}
+                className="flex items-center"
+              >
+                <Plus className="mr-2" /> Add Project
+              </Button>
+            </div>
+
+            {/* Project Form */}
+            <div className="bg-white p-6 rounded-xl shadow-md mb-6">
+              <div className="grid grid-cols-2 gap-4">
                 <input
-                  type="text"
                   placeholder="Project Name"
-                  value={newProject.name}
+                  value={editProject?.name || newProject.name}
                   onChange={(e) =>
-                    setNewProject({ ...newProject, name: e.target.value })
+                    editProject
+                      ? setEditProject({ ...editProject, name: e.target.value })
+                      : setNewProject({ ...newProject, name: e.target.value })
                   }
-                  className="p-2 border border-gray-300 rounded-md"
+                  className="border p-2 rounded"
                 />
                 <input
-                  type="text"
                   placeholder="Description"
-                  value={newProject.description}
+                  value={editProject?.description || newProject.description}
                   onChange={(e) =>
-                    setNewProject({
-                      ...newProject,
-                      description: e.target.value,
-                    })
+                    editProject
+                      ? setEditProject({
+                          ...editProject,
+                          description: e.target.value,
+                        })
+                      : setNewProject({
+                          ...newProject,
+                          description: e.target.value,
+                        })
                   }
-                  className="p-2 border border-gray-300 rounded-md"
+                  className="border p-2 rounded"
                 />
-                <div className="flex items-center gap-2">
+                <input
+                  placeholder="GitHub URL"
+                  value={editProject?.github || newProject.github}
+                  onChange={(e) =>
+                    editProject
+                      ? setEditProject({
+                          ...editProject,
+                          github: e.target.value,
+                        })
+                      : setNewProject({ ...newProject, github: e.target.value })
+                  }
+                  className="border p-2 rounded"
+                />
+                <input
+                  placeholder="Project URL"
+                  value={editProject?.url || newProject.url}
+                  onChange={(e) =>
+                    editProject
+                      ? setEditProject({ ...editProject, url: e.target.value })
+                      : setNewProject({ ...newProject, url: e.target.value })
+                  }
+                  className="border p-2 rounded"
+                />
+                <div className="flex items-center">
                   <input
                     type="file"
                     accept="image/*"
                     onChange={(e) => handleUploadImage(e, "project")}
-                    className="p-2 border border-gray-300 rounded-md flex-grow"
+                    className="border p-2 rounded"
                   />
-                  {uploading && <div>Uploading: {uploadProgress}%</div>}
+                  {uploading && <span>Uploading: {uploadProgress}%</span>}
                 </div>
-                <input
-                  type="text"
-                  placeholder="GitHub URL"
-                  value={newProject.github}
-                  onChange={(e) =>
-                    setNewProject({ ...newProject, github: e.target.value })
-                  }
-                  className="p-2 border border-gray-300 rounded-md"
-                />
-                <input
-                  type="text"
-                  placeholder="Project URL"
-                  value={newProject.url}
-                  onChange={(e) =>
-                    setNewProject({ ...newProject, url: e.target.value })
-                  }
-                  className="p-2 border border-gray-300 rounded-md"
-                />
+                <Button
+                  onClick={editProject ? handleUpdateProject : handleAddProject}
+                  className="bg-blue-500 text-white"
+                >
+                  {editProject ? "Update" : "Add"} Project
+                </Button>
               </div>
-              <Button
-                onClick={handleAddProject}
-                className="bg-blue-500 text-white hover:bg-blue-600"
-              >
-                Add Project
-              </Button>
             </div>
 
-            <div className="space-y-4">
+            {/* Project List */}
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
               {projects.map((project) => (
                 <div
                   key={project.id}
-                  className="bg-white p-4 border border-gray-200 rounded-md shadow-md"
+                  className="bg-white rounded-xl shadow-md p-4"
                 >
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <h3 className="text-xl font-semibold text-gray-800">
-                        {project.name}
-                      </h3>
-                      <p className="text-gray-600">{project.description}</p>
-                    </div>
-                    <div>
-                      <Image
-                        src={`${project.image}`}
-                        width={300}
-                        height={100}
-                        alt="project image"
-                      />
-                    </div>
-                  </div>
-                  <div className="mt-4 flex gap-2">
-                    {/* <Button
-                      onClick={() =>
-                        handleEditProject({ ...project, name: "Updated Name" })
-                      }
-                      className="bg-yellow-500 text-white hover:bg-yellow-600"
-                    >
-                      Edit
-                    </Button> */}
+                  <img
+                    src={project.image}
+                    alt={project.name}
+                    className="w-full h-48 object-cover rounded-md mb-4"
+                  />
+                  <h3 className="font-bold text-xl">{project.name}</h3>
+                  <p>{project.description}</p>
+                  <div className="flex justify-between mt-4">
                     <Button
-                      onClick={() => handleDeleteProject(project.id)}
-                      className="bg-red-500 text-white hover:bg-red-600"
+                      onClick={() => setEditProject(project)}
+                      variant="outline"
                     >
-                      Delete
+                      <Edit className="mr-2" /> Edit
+                    </Button>
+                    <Button
+                      onClick={() => handleDeleteProject(project.id!)}
+                      variant="destructive"
+                    >
+                      <Trash2 className="mr-2" /> Delete
                     </Button>
                   </div>
                 </div>
@@ -323,77 +417,76 @@ const AdminDashboard = () => {
             </div>
           </section>
 
-          {/* Skills Management */}
+          {/* Skills Section */}
           <section className="mb-12">
-            <h2 className="text-3xl font-semibold mb-4 text-gray-700">
-              Skills
-            </h2>
-            <div className="mb-6 space-y-4">
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                <input
-                  type="text"
-                  placeholder="Skill Name"
-                  value={newSkill.name}
-                  onChange={(e) =>
-                    setNewSkill({ ...newSkill, name: e.target.value })
-                  }
-                  className="p-2 border border-gray-300 rounded-md"
-                />
-                <input
-                  type="text"
-                  placeholder="Image URL"
-                  value={newSkill.image}
-                  onChange={(e) =>
-                    setNewSkill({ ...newSkill, image: e.target.value })
-                  }
-                  className="p-2 border border-gray-300 rounded-md"
-                />
-              </div>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-3xl font-semibold">Skills</h2>
               <Button
-                onClick={handleAddSkill}
-                className="bg-blue-500 text-white hover:bg-blue-600"
+                onClick={() => setEditSkill(null)}
+                className="flex items-center"
               >
-                Add Skill
+                <Plus className="mr-2" /> Add Skill
               </Button>
             </div>
 
-            <div className="flex flex-wrap gap-2">
-              {/* {skills.map((skill) => (
-                <div
-                  key={skill.id}
-                  className="bg-white p-4 border border-gray-200 rounded-md shadow-md flex items-center"
-                >
-                  <h3 className="text-xl font-semibold text-gray-800">
-                    {skill.name}
-                  </h3> */}
-              {/* <img src={skill.image || '/default-skill-image.png'} alt={skill.name} className="w-12 h-12 rounded-full ml-4" /> */}
-              {/* <div className="ml-auto flex gap-2">
-                    <Button
-                      onClick={() =>
-                        handleEditSkill({ ...skill, name: "Updated Skill" })
-                      }
-                      className="bg-yellow-500 text-white hover:bg-yellow-600"
-                    >
-                      Edit
-                    </Button>
-                    <Button
-                      onClick={() => handleDeleteSkill(skill.id)}
-                      className="bg-red-500 text-white hover:bg-red-600"
-                    >
-                      Delete
-                    </Button>
-                  </div>
+            {/* Skill Form */}
+            <div className="bg-white p-6 rounded-xl shadow-md mb-6">
+              <div className="grid grid-cols-2 gap-4">
+                <input
+                  placeholder="Skill Name"
+                  value={editSkill?.name || newSkill.name}
+                  onChange={(e) =>
+                    editSkill
+                      ? setEditSkill({ ...editSkill, name: e.target.value })
+                      : setNewSkill({ ...newSkill, name: e.target.value })
+                  }
+                  className="border p-2 rounded"
+                />
+                <div className="flex items-center">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => handleUploadImage(e, "skill")}
+                    className="border p-2 rounded"
+                  />
+                  {uploading && <span>Uploading: {uploadProgress}%</span>}
                 </div>
-              ))} */}
-              {skills.map((skill, index) => (
+                <Button
+                  onClick={editSkill ? handleUpdateSkill : handleAddSkill}
+                  className="bg-blue-500 text-white"
+                >
+                  {editSkill ? "Update" : "Add"} Skill
+                </Button>
+              </div>
+            </div>
+
+            {/* Skill List */}
+            <div className="flex flex-wrap gap-4">
+              {skills.map((skill) => (
                 <div
                   key={skill.id}
-                  className="bg-gray-200 px-3 flex text-center py-1 rounded-full text-sm"
+                  className="bg-white rounded-xl shadow-md p-4 flex items-center"
                 >
-                  <div className=" my-auto">{skill.name}</div>
-                  <div className=" text-red-400">
-                    <Button onClick={() => handleDeleteSkill(skill.id)}>
-                      <X />
+                  <img
+                    src={skill.image}
+                    alt={skill.name}
+                    className="w-12 h-12 object-cover rounded-full mr-4"
+                  />
+                  <span className="font-semibold">{skill.name}</span>
+                  <div className="ml-auto flex gap-2">
+                    <Button
+                      onClick={() => setEditSkill(skill)}
+                      variant="outline"
+                      size="sm"
+                    >
+                      <Edit className="mr-2" /> Edit
+                    </Button>
+                    <Button
+                      onClick={() => handleDeleteSkill(skill.id!)}
+                      variant="destructive"
+                      size="sm"
+                    >
+                      <Trash2 className="mr-2" /> Delete
                     </Button>
                   </div>
                 </div>
@@ -401,91 +494,98 @@ const AdminDashboard = () => {
             </div>
           </section>
 
-          {/* Adarsh Details Management */}
-          <section className="mb-8">
-            <h2 className="text-2xl font-semibold mb-4">Adarsh Details</h2>
-            <div className="bg-white p-6 border border-gray-200 rounded-md shadow-md">
-              <input
-                type="text"
-                placeholder="Tagline"
-                value={newAdarsh.tagline}
-                onChange={(e) =>
-                  setNewAdarsh({ ...newAdarsh, tagline: e.target.value })
-                }
-                className="p-2 border border-gray-300 rounded-md mb-2 w-full"
-              />
-              <textarea
-                placeholder="Bio"
-                value={newAdarsh.bio}
-                onChange={(e) =>
-                  setNewAdarsh({ ...newAdarsh, bio: e.target.value })
-                }
-                className="p-2 border border-gray-300 rounded-md mb-2 w-full"
-              />
-              <div>
+          {/* Adarsh Details Section */}
+          <section>
+            <h2 className="text-3xl font-semibold mb-6">Adarsh Details</h2>
+            <div className="bg-white p-6 rounded-xl shadow-md">
+              <div className="grid grid-cols-2 gap-4">
                 <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => handleUploadImage(e, "adarsh")}
-                  className="p-2 border border-gray-300 rounded-md flex-grow"
+                  placeholder="Tagline"
+                  value={newAdarsh.tagline}
+                  onChange={(e) =>
+                    setNewAdarsh({ ...newAdarsh, tagline: e.target.value })
+                  }
+                  className="border p-2 rounded"
                 />
-                {uploading && <div>Uploading: {uploadProgress}%</div>}
+                <textarea
+                  placeholder="Bio"
+                  value={newAdarsh.bio}
+                  onChange={(e) =>
+                    setNewAdarsh({ ...newAdarsh, bio: e.target.value })
+                  }
+                  className="border p-2 rounded h-24"
+                />
+                <input
+                  placeholder="Email"
+                  value={newAdarsh.email}
+                  onChange={(e) =>
+                    setNewAdarsh({ ...newAdarsh, email: e.target.value })
+                  }
+                  className="border p-2 rounded"
+                />
+                <input
+                  placeholder="Resume URL"
+                  value={newAdarsh.resume}
+                  onChange={(e) =>
+                    setNewAdarsh({ ...newAdarsh, resume: e.target.value })
+                  }
+                  className="border p-2 rounded"
+                />
+                <input
+                  placeholder="GitHub URL"
+                  value={newAdarsh.github}
+                  onChange={(e) =>
+                    setNewAdarsh({ ...newAdarsh, github: e.target.value })
+                  }
+                  className="border p-2 rounded"
+                />
+                <input
+                  placeholder="LinkedIn URL"
+                  value={newAdarsh.linkedin}
+                  onChange={(e) =>
+                    setNewAdarsh({ ...newAdarsh, linkedin: e.target.value })
+                  }
+                  className="border p-2 rounded"
+                />
+                <div className="flex items-center">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => handleUploadImage(e, "adarsh")}
+                    className="border p-2 rounded"
+                  />
+                  {uploading && <span>Uploading: {uploadProgress}%</span>}
+                </div>
+                {newAdarsh.image && (
+                  <img
+                    src={newAdarsh.image}
+                    alt="Adarsh Profile"
+                    className="w-32 h-32 object-cover rounded-full"
+                  />
+                )}
+                <Button
+                  onClick={handleUpdateAdarshDetails}
+                  className="bg-blue-500 text-white col-span-2"
+                >
+                  Update Adarsh Details
+                </Button>
               </div>
-              {newAdarsh.image && (
-                <img
-                  src={newAdarsh.image}
-                  alt="Adarsh Image"
-                  className="w-32 h-32 object-cover mb-4"
-                />
-              )}
-
-              <input
-                type="text"
-                placeholder="Email"
-                value={newAdarsh.email}
-                onChange={(e) =>
-                  setNewAdarsh({ ...newAdarsh, email: e.target.value })
-                }
-                className="p-2 border border-gray-300 rounded-md mb-2 w-full"
-              />
-              <input
-                type="text"
-                placeholder="Resume URL"
-                value={newAdarsh.resume}
-                onChange={(e) =>
-                  setNewAdarsh({ ...newAdarsh, resume: e.target.value })
-                }
-                className="p-2 border border-gray-300 rounded-md mb-2 w-full"
-              />
-              <input
-                type="text"
-                placeholder="GitHub URL"
-                value={newAdarsh.github}
-                onChange={(e) =>
-                  setNewAdarsh({ ...newAdarsh, github: e.target.value })
-                }
-                className="p-2 border border-gray-300 rounded-md mb-2 w-full"
-              />
-              <input
-                type="text"
-                placeholder="LinkedIn URL"
-                value={newAdarsh.linkedin}
-                onChange={(e) =>
-                  setNewAdarsh({ ...newAdarsh, linkedin: e.target.value })
-                }
-                className="p-2 border border-gray-300 rounded-md mb-2 w-full"
-              />
-              <Button
-                onClick={handleAdarshChange}
-                className="bg-blue-500 text-white hover:bg-blue-600"
-              >
-                Update Adarsh Details
-              </Button>
             </div>
           </section>
-        </div>
+
+          {/* Logout Button */}
+          <div className="fixed bottom-4 right-4">
+            <Button
+              onClick={handleLogout}
+              variant="destructive"
+              className="flex items-center"
+            >
+              <Lock className="mr-2" /> Logout
+            </Button>
+          </div>
+        </>
       )}
-    </>
+    </div>
   );
 };
 

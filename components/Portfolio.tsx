@@ -1,16 +1,121 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { Sun, Moon, Mail, GithubIcon, LinkedinIcon } from "lucide-react";
+import { Sun, Moon, GithubIcon, LinkedinIcon, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import Image from "next/image";
-import { motion, useScroll, useSpring, useInView, AnimatePresence } from "framer-motion";
-import Slider from "react-slick";
-import { sendContactForm } from "@/utils/api";
-import AnimatedLandscape from "./ui/AnimatedLandscape";
-
-import "slick-carousel/slick/slick.css";
-import "slick-carousel/slick/slick-theme.css";
+import { motion, useScroll, useSpring, useInView } from "framer-motion";
+import AnimatedLandscape from "@/components/ui/AnimatedLandscape";
 import Link from "next/link";
+
+const AstroBackground: React.FC<{ isDarkMode: boolean }> = ({ isDarkMode }) => {
+  const generateStars = (count: number) => {
+    return Array.from({ length: count }, (_, i) => ({
+      x: Math.random() * window.innerWidth,
+      y: Math.random() * window.innerHeight,
+      size: Math.random() * 3 + 1,
+      delay: Math.random() * 2
+    }));
+  };
+
+  const stars = generateStars(100);
+
+  return (
+    <motion.div 
+      className="fixed inset-0 -z-10 overflow-hidden"
+      style={{
+        background: isDarkMode 
+          ? 'linear-gradient(135deg, #0d1117, #161b22)' 
+          : 'linear-gradient(135deg, #e6e9f0, #f5f7fa)'
+      }}
+    >
+      {/* Floating Planets */}
+      {[
+        { size: 80, color: 'rgba(59, 130, 246, 0.2)', x: '10%', y: '20%' },
+        { size: 120, color: 'rgba(99, 102, 241, 0.1)', x: '80%', y: '70%' }
+      ].map((planet, index) => (
+        <motion.div
+          key={index}
+          className="absolute rounded-full blur-2xl"
+          style={{
+            width: planet.size,
+            height: planet.size,
+            backgroundColor: planet.color,
+            left: planet.x,
+            top: planet.y,
+            transform: `translate(-50%, -50%) rotate(${index * 45}deg)`
+          }}
+          animate={{
+            rotate: 360,
+            scale: [1, 1.1, 1],
+          }}
+          transition={{
+            duration: 10 + index * 5,
+            repeat: Infinity,
+            ease: "linear"
+          }}
+        />
+      ))}
+
+      {/* Animated Stars */}
+      {stars.map((star, index) => (
+        <motion.div
+          key={index}
+          className="absolute rounded-full"
+          style={{
+            width: star.size,
+            height: star.size,
+            backgroundColor: isDarkMode ? 'white' : 'rgba(0,0,0,0.2)',
+            left: star.x,
+            top: star.y
+          }}
+          animate={{
+            opacity: [0.2, 1, 0.2],
+            scale: [0.5, 1, 0.5]
+          }}
+          transition={{
+            duration: 3,
+            delay: star.delay,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+        />
+      ))}
+
+      {/* Floating Particles */}
+      {[...Array(20)].map((_, index) => (
+        <motion.div
+          key={index}
+          className="absolute rounded-full opacity-50"
+          style={{
+            width: Math.random() * 10 + 5,
+            height: Math.random() * 10 + 5,
+            backgroundColor: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
+            left: Math.random() * window.innerWidth,
+            top: Math.random() * window.innerHeight
+          }}
+          animate={{
+            x: [
+              Math.random() * 100 - 50, 
+              Math.random() * 100 - 50, 
+              Math.random() * 100 - 50
+            ],
+            y: [
+              Math.random() * 100 - 50, 
+              Math.random() * 100 - 50, 
+              Math.random() * 100 - 50
+            ],
+            opacity: [0.2, 0.5, 0.2]
+          }}
+          transition={{
+            duration: 10 + Math.random() * 10,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+        />
+      ))}
+    </motion.div>
+  );
+};
 
 interface Project {
   id: string;
@@ -18,16 +123,21 @@ interface Project {
   description: string;
   image: string;
   github: string;
-  url?: string;
+  url?: string | null;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 interface Skill {
   id: string;
   name: string;
-  image?: string;
+  image?: string | null;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
-interface Adarsh {
+interface AdarshProfile {
+  id: string;
   tagline: string;
   image: string;
   bio: string;
@@ -38,37 +148,17 @@ interface Adarsh {
 }
 
 interface PortfolioProps {
-  projects: Project[];
-  skills: Skill[];
-  adarsh: Adarsh;
+  projects?: Project[];
+  skills?: Skill[];
+  adarsh: AdarshProfile;
 }
 
-const AlertBox: React.FC<{
-  message: string;
-  type: "success" | "error";
-  onClose: () => void;
-}> = ({ message, type, onClose }) => {
-  return (
-    <div
-      className={`fixed bottom-4 right-4 p-4 rounded-md shadow-lg text-white ${
-        type === "success" ? "bg-green-500" : "bg-red-500"
-      }`}
-    >
-      {message}
-      <button onClick={onClose} className="ml-4 text-white hover:text-gray-200">
-        &times;
-      </button>
-    </div>
-  );
-};
-
-
-const Portfolio: React.FC<PortfolioProps> = ({ projects, skills, adarsh }) => {
-  const [darkMode, setDarkMode] = React.useState(false);
-  const [alert, setAlert] = useState<{
-    message: string;
-    type: "success" | "error";
-  } | null>(null);
+const Portfolio: React.FC<PortfolioProps> = ({ 
+  projects = [], 
+  skills = [], 
+  adarsh 
+}) => {
+  const [darkMode, setDarkMode] = useState(false);
   const { scrollYProgress } = useScroll();
   const scaleX = useSpring(scrollYProgress, {
     stiffness: 100,
@@ -77,373 +167,158 @@ const Portfolio: React.FC<PortfolioProps> = ({ projects, skills, adarsh }) => {
   });
 
   useEffect(() => {
-    if (darkMode) {
-      document.documentElement.classList.add("dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-    }
+    document.documentElement.classList.toggle("dark", darkMode);
   }, [darkMode]);
 
   const toggleDarkMode = () => setDarkMode(!darkMode);
 
-  const settings = {
-    dots: true,
-    infinite: true,
-    buttons: true,
-    speed: 500,
-    slidesToShow: 2,
-    slidesToScroll: 1,
-    autoplay: true,
-    autoplaySpeed: 2000,
-    padding: 10,
-    pauseOnHover: true,
-    responsive: [
-      {
-        breakpoint: 1024,
-        settings: {
-          slidesToShow: 1,
-          slidesToScroll: 1,
-        },
-      },
-      {
-        breakpoint: 600,
-        settings: {
-          slidesToShow: 1,
-          slidesToScroll: 1,
-        },
-      },
-    ],
-  };
-  const [sending, setSending] = useState(false);
-
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-    setSending(true);
-
-    const form = event.target;
-    const formData = new FormData(form);
-    const data = Object.fromEntries(formData.entries());
-
-    try {
-      const result = await sendContactForm(data);
-      setAlert({
-        message: result.message || "Message sent successfully!",
-        type: "success",
-      });
-
-      form.reset();
-      setSending(false);
-    } catch (error) {
-      setAlert({ message: "Failed to send message.", type: "error" });
-    }
-  };
-
-  const handleCloseAlert = () => {
-    setAlert(null);
-  };
-
-  const AnimatedSection = ({ children }) => {
+  const AnimatedSection = ({ children, delay = 0 }) => {
     const ref = React.useRef(null);
-    const isInView = useInView(ref, { amount: 0.3 });
+    const isInView = useInView(ref, { amount: 0.1 });
     return (
-      <motion.section
+      <motion.div
         ref={ref}
         initial={{ opacity: 0, y: 50 }}
         animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 50 }}
-        transition={{ duration: 0.8 }}
-        className="mb-12"
+        transition={{ duration: 0.6, delay }}
+        className="mb-16"
       >
         {children}
-      </motion.section>
+      </motion.div>
     );
   };
 
-  const itemVariants = {
-    hidden: { y: 20, opacity: 0 },
-    visible: {
-      y: 0,
-      opacity: 1,
-      transition: {
-        type: "spring",
-        stiffness: 100,
-      },
-    },
-  };
-
-  const pageVariants = {
-    initial: { opacity: 0, y: 20 },
-    in: { opacity: 1, y: 0 },
-    out: { opacity: 0, y: -20 }
-  };
-
-  const pageTransition = {
-    type: "tween",
-    ease: "anticipate",
-    duration: 0.5
-  };
-
-
   return (
     <div className="relative min-h-screen">
-    <AnimatedLandscape isDarkMode={darkMode} />
-    
-    <motion.div
-      className="fixed top-0 left-0 right-0 h-1 bg-blue-500 z-50"
-      style={{ scaleX }}
-    />
-    
-    <div className="relative z-10">
-      <nav className="sticky top-0 bg-white bg-opacity-80 dark:bg-gray-900 dark:bg-opacity-80 backdrop-filter backdrop-blur-lg z-40">
-        <div className="container mx-auto px-6 py-4 flex justify-between items-center">
-          <h1 className="text-2xl dark:text-white font-bold">Adarsh Kumar</h1>
-          <div className="flex">
-          <Link href={`${adarsh.resume}`}>
-            <div className="bg-gray-200 dark:bg-gray-400 px-3 py-2 my-auto justify-center rounded-full text-sm">
-            Résumé
-            </div>
-          </Link>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={toggleDarkMode}
-            className="rounded-full"
-          >
-            {darkMode ? (
-              <Sun className="h-[1.2rem] w-[1.2rem] text-white" />
-            ) : (
-              <Moon className="h-[1.2rem] w-[1.2rem] " />
-            )}
-          </Button>
+      <AnimatedLandscape isDarkMode={darkMode} />
+      
+      <motion.div
+        className="fixed top-0 left-0 right-0 h-1 bg-blue-500 z-50"
+        style={{ scaleX }}
+      />
+      
+      <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Navigation */}
+        <nav className="py-6 flex justify-between items-center">
+          <h1 className="text-lg font-bold tracking-tight text-gray-900 dark:text-white md:text-2xl">Adarsh Kumar</h1>
+          <div className="flex items-center space-x-4">
+            <Link 
+              href={adarsh.resume} 
+              target="_blank" 
+              className="bg-white/50 dark:bg-gray-400/50 dark:text-white backdrop-blur-md px-3 py-2 rounded-md text-sm font-medium hover:bg-white/70 dark:hover:bg-gray-400/70 transition-colors"
+            >
+              Résumé
+            </Link>
+            <Button 
+              onClick={toggleDarkMode} 
+              variant="ghost" 
+              size="icon" 
+              className="rounded-full bg-white/50 dark:bg-gray-900/50 backdrop-blur-md"
+            >
+              {darkMode ? <Sun className="h-5 w-5 text-white" /> : <Moon className="h-5 w-5" />}
+            </Button>
           </div>
-        </div>
-      </nav>
+        </nav>
 
-      <main className="container mx-auto px-6 py-12 relative z-10">
+        {/* Hero Section */}
         <AnimatedSection>
-          <motion.section className="md:flex items-center">
-            <motion.div className="mr-8">
-              <motion.h2 className="text-4xl dark:text-white font-bold mb-4">
-                Hello, I'm Adarsh
-              </motion.h2>
-              <motion.p className="text-xl dark:text-gray-200 mb-6">{adarsh.tagline}</motion.p>
-              <motion.p className="mb-6 dark:text-gray-100">{adarsh.bio}</motion.p>
-            </motion.div>
-            <motion.div
-              className="flex-shrink-0"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-
-            </motion.div>
-            <motion.div
-              className="flex-shrink-0"
-              whileHover={{ scale: 1.05, rotate: 5 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <Image
-                src={`${adarsh.image}`}
-                alt="Adarsh Kumar"
-                width={200}
-                height={200}
-                className="rounded-full"
-                unoptimized={true}
-              />
-            </motion.div>
-          </motion.section>
-        </AnimatedSection>
-
-        <AnimatedSection>
-          <h3 className="text-2xl font-bold mb-4 dark:text-white">Skills</h3>
-          <motion.div className="flex flex-wrap gap-2">
-            {skills.map((skill, index) => (
-              <motion.span
-                key={skill.id}
-                className="bg-blue-100 dark:bg-blue-900 dark:text-white px-4 py-2 rounded-full text-sm font-semibold shadow-md hover:shadow-lg transition-shadow duration-300"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-                whileHover={{
-                  scale: 1.05,
-                  boxShadow: "0px 5px 10px rgba(0, 0, 0, 0.1)"
-                }}
+          <div className="grid md:grid-cols-2 gap-8 mt-2 items-center">
+            <div>
+              <h2 className="md:text-4xl text-2xl font-bold mb-4 text-gray-900 dark:text-white">Hello, I'm Adarsh</h2>
+              <p className="md:text-xl text-lg text-gray-700 dark:text-gray-300 mb-4">{adarsh.tagline}</p>
+              <p className="text-gray-800 dark:text-gray-200">{adarsh.bio}</p>
+              <div className="flex space-x-4 mt-6">
+                <Link href={adarsh.github} target="_blank">
+                  <GithubIcon className="h-6 w-6 text-gray-800 dark:text-white hover:text-blue-500 transition-colors" />
+                </Link>
+                <Link href={adarsh.linkedin} target="_blank">
+                  <LinkedinIcon className="h-6 w-6 text-gray-800 dark:text-white hover:text-blue-500 transition-colors" />
+                </Link>
+              </div>
+            </div>
+            <div className="flex justify-center">
+              <motion.div
+                whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
+                className="relative"
               >
-                {skill.name}
-              </motion.span>
-            ))}
-          </motion.div>
+                <Image
+                  src={adarsh.image}
+                  alt="Adarsh Kumar"
+                  width={300}
+                  height={300}
+                  className="rounded-full object-cover shadow-lg"
+                  unoptimized
+                />
+              </motion.div>
+            </div>
+          </div>
         </AnimatedSection>
 
-        <AnimatedSection>
-          <motion.h3
-            variants={itemVariants}
-            className="text-2xl dark:text-white font-bold mb-4"
-          >
-            Projects
-          </motion.h3>
-          <motion.div variants={itemVariants}>
-            <Slider {...settings}>
+        {/* Skills Section */}
+        {skills.length > 0 && (
+          <AnimatedSection delay={0.2}>
+            <h3 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">Skills</h3>
+            <div className="flex flex-wrap gap-3">
+              {skills.map((skill, index) => (
+                <motion.span
+                  key={skill.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                  className="bg-white/50 dark:bg-gray-800/50 backdrop-blur-md px-4 py-2 rounded-full text-sm font-medium text-gray-800 dark:text-white"
+                >
+                  {skill.name}
+                </motion.span>
+              ))}
+            </div>
+          </AnimatedSection>
+        )}
+
+        {/* Projects Section */}
+        {projects.length > 0 && (
+          <AnimatedSection delay={0.3}>
+            <h3 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">Projects</h3>
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
               {projects.map((project) => (
-                <div key={project.id} className="px-2">
-                  <motion.div
-                    className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 h-full"
-                    whileHover={{ scale: 0.98, y: -5 }}
-                    whileTap={{ scale: 0.98 }}
-                  >
-                    <Link href={`${project.github}`}>
-                      <h4 className="text-xl dark:text-white font-semibold mb-3">
-                        {project.name}
-                      </h4>
-                    </Link>
-                    <p className="text-sm mb-4 dark:text-gray-200 line-clamp-2">
+                <motion.div
+                  key={project.id}
+                  whileHover={{ scale: 1.03 }}
+                  className="bg-white/50 dark:bg-gray-800/50 backdrop-blur-md rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-all"
+                >
+                  <div className="relative h-48 w-full">
+                    <Image
+                      src={project.image}
+                      alt={project.name}
+                      layout="fill"
+                      objectFit="cover"
+                      unoptimized
+                    />
+                  </div>
+                  <div className="p-5">
+                    <div className="flex justify-between items-center mb-3">
+                      <h4 className="text-lg font-semibold text-gray-900 dark:text-white">{project.name}</h4>
+                      <div className="flex space-x-2">
+                        <Link href={project.github} target="_blank">
+                          <GithubIcon className="h-5 w-5 text-gray-800 dark:text-white hover:text-blue-500" />
+                        </Link>
+                        {project.url && (
+                          <Link href={project.url} target="_blank">
+                            <ExternalLink className="h-5 w-5 text-gray-800 dark:text-white hover:text-blue-500" />
+                          </Link>
+                        )}
+                      </div>
+                    </div>
+                    <p className="text-sm text-gray-700 dark:text-gray-300 mb-3">
                       {project.description}
                     </p>
-                    <motion.div
-                      className="relative w-full h-56 mb-4 rounded-lg overflow-hidden"
-                      whileHover={{ scale: 1.00 }}
-                      whileTap={{ scale: 0.95 }}
-                    >
-                      <Image
-                        src={`${project.image}`}
-                        alt={project.name}
-                        layout="fill"
-                        objectFit="cover"
-                        unoptimized={true}
-                      />
-                    </motion.div>
-                  </motion.div>
-                </div>
-              ))}
-            </Slider>
-          </motion.div>
-        </AnimatedSection>
-
-        <AnimatedSection>
-          <motion.h3 variants={itemVariants} className="text-2xl dark:text-white font-bold mb-4">
-            Get in Touch
-          </motion.h3>
-          <div className="flex flex-col md:flex-row gap-8">
-            <motion.div variants={itemVariants} className="flex-1">
-              <form
-                onSubmit={handleSubmit}
-                className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg"
-              >
-                <h4 className="text-xl dark:text-white font-semibold mb-4">Contact Me</h4>
-                <div className="mb-4">
-                  <label
-                    htmlFor="name"
-                    className="block text-sm dark:text-white font-medium mb-2"
-                  >
-                    Name
-                  </label>
-                  <input
-                    type="text"
-                    id="name"
-                    name="name"
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900  dark:text-white"
-                  />
-                </div>
-                <div className="mb-4">
-                  <label
-                    htmlFor="email"
-                    className="block text-sm dark:text-white font-medium mb-2"
-                  >
-                    Email
-                  </label>
-                  <input
-                    type="email"
-                    id="email"
-                    name="email"
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                  />
-                </div>
-                <div className="mb-4">
-                  <label
-                    htmlFor="message"
-                    className="block text-sm dark:text-white font-medium mb-2"
-                  >
-                    Message
-                  </label>
-                  <textarea
-                    id="message"
-                    name="message"
-                    required
-                    rows={4}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                  />
-                </div>
-                <motion.button
-                  type="submit"
-                  className={`w-full px-4 py-2 rounded-md text-white transition-all ${
-                    sending
-                      ? "bg-blue-300 cursor-not-allowed"
-                      : "bg-blue-500 hover:bg-blue-600"
-                  }`}
-                  disabled={sending}
-                  whileHover={{ scale: 1.003 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  {sending ? "Sending" : "Send"}
-                </motion.button>
-              </form>
-            </motion.div>
-            <motion.div
-              variants={itemVariants}
-              className="flex-1 hidden md:block"
-              whileHover={{ scale: 1.00 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <Image
-                src={"/contact.svg"}
-                height={600}
-                width={600}
-                alt="Contact Illustration"
-              />
-            </motion.div>
-          </div>
-         
-          <motion.div variants={itemVariants} className="flex mt-8 justify-center">
-            <div className="flex gap-6">
-              {[
-                { icon: Mail, href: `mailto:${adarsh.email}` },
-                { icon: GithubIcon, href: adarsh.github },
-                { icon: LinkedinIcon, href: adarsh.linkedin },
-              ].map(({ icon: Icon, href }, index) => (
-                <motion.a
-                  key={index}
-                  href={href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-gray-100 dark:text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors"
-                  whileHover={{ scale: 1.2, rotate: 5 }}
-                  whileTap={{ scale: 0.9 }}
-                >
-                  <Icon className="h-8 w-8" />
-                </motion.a>
+                  </div>
+                </motion.div>
               ))}
             </div>
-          </motion.div>
-        </AnimatedSection>
-      </main>
-      
-      <AnimatePresence>
-        {alert && (
-          <motion.div
-            initial={{ opacity: 0, y: 50 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 50 }}
-          >
-            <AlertBox
-              message={alert.message}
-              type={alert.type}
-              onClose={handleCloseAlert}
-            />
-          </motion.div>
+          </AnimatedSection>
         )}
-      </AnimatePresence>
-      </div>  
+      </div>
     </div>
   );
 };

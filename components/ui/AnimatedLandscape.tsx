@@ -1,129 +1,125 @@
-import React from "react";
-import { motion, useScroll, useTransform } from "framer-motion";
+import React, { useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
 
-const AnimatedLandscape = ({ isDarkMode }) => {
-  const { scrollYProgress } = useScroll();
+const AstroBackground: React.FC<{ isDarkMode: boolean }> = ({ isDarkMode }) => {
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
 
-  const sunMoonY = useTransform(scrollYProgress, [0, 1], ["100%", "-20%"]);
-  const skyColor = useTransform(
-    scrollYProgress,
-    [0, 0.5, 1],
-    isDarkMode
-      ? ["#1a202c", "#2d3748", "#4a5568"]
-      : ["#fef9c3", "#93c5fd", "#60a5fa"]
-  );
+  useEffect(() => {
+    const handleMouseMove = (event: MouseEvent) => {
+      setMousePosition({ x: event.clientX, y: event.clientY });
+    };
 
-  const mountainColors = isDarkMode
-    ? ["#1e293b", "#334155", "#475569", "#64748b"]
-    : ["#52525b", "#78716c", "#a8a29e", "#d6d3d1"];
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
 
-  const cloudOpacity = useTransform(scrollYProgress, [0, 0.5], [1, 0]);
-  const starOpacity = useTransform(
-    scrollYProgress,
-    [0.5, 1],
-    [0, isDarkMode ? 1 : 0]
-  );
+  const generateStars = (count: number) => {
+    return Array.from({ length: count }, (_, i) => ({
+      x: Math.random() * window.innerWidth,
+      y: Math.random() * window.innerHeight,
+      size: Math.random() * 3 + 1,
+      delay: Math.random() * 2
+    }));
+  };
 
-  const cloudFillColor = isDarkMode ? "rgba(169, 169, 169, 0.8)" : "rgba(255, 255, 255, 0.8)";
-  
-  const cloudSVG = `
-    <g transform="scale(10)">
-      <path d="M55.7,20.5c-0.1,0.3-0.1,0.6-0.1,0.9c0,1.6,1.3,2.9,2.9,2.9c0.2,0,0.4,0,0.6-0.1c0.1,1.3,1.2,2.3,2.5,2.3
-        c1.2,0,2.1-0.8,2.4-1.9c0.3,0.1,0.5,0.1,0.8,0.1c1.6,0,2.9-1.3,2.9-2.9c0-1.1-0.6-2-1.5-2.5c0.1-0.3,0.1-0.6,0.1-1
-        c0-2.4-1.9-4.3-4.3-4.3c-1.8,0-3.4,1.1-4,2.7c-0.2,0-0.4-0.1-0.7-0.1c-1.6,0-2.9,1.3-2.9,2.9C54.4,19.6,54.9,20.2,55.7,20.5z" fill="${cloudFillColor}"/>
-    </g>
-  `;
+  const stars = generateStars(100);
 
   return (
-    <svg
-      viewBox="0 0 1000 1000"
-      className="fixed top-0 left-0 w-full h-full -z-10"
-      preserveAspectRatio="xMidYMax slice"
+    <motion.div 
+      className="fixed inset-0 -z-10 overflow-hidden"
+      style={{
+        background: isDarkMode 
+          ? 'linear-gradient(135deg, #0d1117, #161b22)' 
+          : 'linear-gradient(135deg, #e6e9f0, #f5f7fa)'
+      }}
     >
-      <motion.rect x="0" y="0" width="1000" height="1000" fill={skyColor} />
+      {/* Floating Planets */}
+      {[
+        { size: 80, color: 'rgba(59, 130, 246, 0.2)', x: '10%', y: '20%' },
+        { size: 120, color: 'rgba(99, 102, 241, 0.1)', x: '80%', y: '70%' }
+      ].map((planet, index) => (
+        <motion.div
+          key={index}
+          className="absolute rounded-full blur-2xl"
+          style={{
+            width: planet.size,
+            height: planet.size,
+            backgroundColor: planet.color,
+            left: planet.x,
+            top: planet.y,
+            transform: `translate(-50%, -50%) rotate(${index * 45}deg)`
+          }}
+          animate={{
+            rotate: 360,
+            scale: [1, 1.1, 1],
+          }}
+          transition={{
+            duration: 10 + index * 5,
+            repeat: Infinity,
+            ease: "linear"
+          }}
+        />
+      ))}
 
-      {/* Stars */}
-      <motion.g style={{ opacity: starOpacity }}>
-          {isDarkMode && [...Array(100)].map((_, i) => (
-            <motion.circle
-              key={i}
-              cx={Math.random() * 1000}
-              cy={Math.random() * 500}
-              r={Math.random() * 2 + 1}
-              fill="#ffffff"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: [0, 1, 0] }}
-              transition={{ 
-                duration: 2 + Math.random() * 3, 
-                repeat: Infinity, 
-                delay: Math.random() * 2 
-              }}
-            />
-          ))}
-        </motion.g>
-        
+      {/* Animated Stars */}
+      {stars.map((star, index) => (
+        <motion.div
+          key={index}
+          className="absolute rounded-full"
+          style={{
+            width: star.size,
+            height: star.size,
+            backgroundColor: isDarkMode ? 'white' : 'rgba(0,0,0,0.2)',
+            left: star.x,
+            top: star.y
+          }}
+          animate={{
+            opacity: [0.2, 1, 0.2],
+            scale: [0.5, 1, 0.5]
+          }}
+          transition={{
+            duration: 3,
+            delay: star.delay,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+        />
+      ))}
 
-      {/* Clouds */}
-      <motion.g style={{ opacity: cloudOpacity}}>
-        {[...Array(2)].map((_, i) => (
-          <motion.g
-            key={i}
-            dangerouslySetInnerHTML={{ __html: cloudSVG }}
-            initial={{ x: -400+i*280, y: 400 }}
-            animate={{ x: 1100 }}
-            transition={{
-              duration: 60 + i * 10,
-              repeat: Infinity,
-              ease: "linear",
-              delay: i * 5,
-            }}
-          />
-        ))}
-      </motion.g>
-      <motion.g style={{ opacity: cloudOpacity }}>
-        {[...Array(2)].map((_, i) => (
-          <motion.g
-            key={i}
-            dangerouslySetInnerHTML={{ __html: cloudSVG }}
-            initial={{ x: -450 + i*200, y: 500 }}
-            animate={{ x: 1100 }}
-            transition={{
-              duration: 60 + i * 10,
-              repeat: Infinity,
-              ease: "linear",
-              delay: i * 5,
-            }}
-          />
-        ))}
-      </motion.g>
-      {/* Sun or Moon */}
-      <motion.circle
-        cx="500"
-        cy="1000"
-        r="100"
-        fill={isDarkMode ? "#f1f5f9" : "#fde047"}
-        style={{ y: sunMoonY }}
-      />
-
-      {/* Mountain ranges */}
-      <path
-        d="M0 850 Q 100 800, 200 830 T 400 810 T 600 840 T 800 820 T 1000 850 L 1000 1000 L 0 1000 Z"
-        fill={mountainColors[0]}
-      />
-      <path
-        d="M0 900 Q 50 850, 100 880 T 200 850 T 300 890 T 400 860 T 500 900 T 600 870 T 700 910 T 800 880 T 900 920 T 1000 900 L 1000 1000 L 0 1000 Z"
-        fill={mountainColors[1]}
-      />
-      <path
-        d="M0 950 Q 100 850, 150 920 T 300 880 T 450 940 T 600 900 T 750 960 T 900 910 T 1000 950 L 1000 1000 L 0 1000 Z"
-        fill={mountainColors[2]}
-      />
-      <path
-        d="M0 980 Q 150 950, 250 975 T 500 960 T 750 980 T 1000 965 L 1000 1000 L 0 1000 Z"
-        fill={mountainColors[3]}
-      />
-    </svg>
+      {/* Floating Particles */}
+      {[...Array(20)].map((_, index) => (
+        <motion.div
+          key={index}
+          className="absolute rounded-full opacity-50"
+          style={{
+            width: Math.random() * 10 + 5,
+            height: Math.random() * 10 + 5,
+            backgroundColor: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
+            left: Math.random() * window.innerWidth,
+            top: Math.random() * window.innerHeight
+          }}
+          animate={{
+            x: [
+              Math.random() * 100 - 50, 
+              Math.random() * 100 - 50, 
+              Math.random() * 100 - 50
+            ],
+            y: [
+              Math.random() * 100 - 50, 
+              Math.random() * 100 - 50, 
+              Math.random() * 100 - 50
+            ],
+            opacity: [0.2, 0.5, 0.2]
+          }}
+          transition={{
+            duration: 10 + Math.random() * 10,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+        />
+      ))}
+    </motion.div>
   );
 };
 
-export default AnimatedLandscape;
+export default AstroBackground;
