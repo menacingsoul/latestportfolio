@@ -3,7 +3,9 @@ import { NextResponse } from "next/server";
 import { prisma } from "../../../utils/db";
 
 export async function GET() {
-  const projects = await prisma.projects.findMany();
+  const projects = await prisma.projects.findMany({
+    orderBy: { createdAt: "desc" },
+  });
   return NextResponse.json({ projects });
 }
 

@@ -1,6 +1,12 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { Sun, Moon, GithubIcon, LinkedinIcon, ExternalLink } from "lucide-react";
+import {
+  Sun,
+  Moon,
+  GithubIcon,
+  LinkedinIcon,
+  ExternalLink,
+} from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import Image from "next/image";
 import { motion, useScroll, useSpring, useInView } from "framer-motion";
@@ -13,25 +19,25 @@ const AstroBackground: React.FC<{ isDarkMode: boolean }> = ({ isDarkMode }) => {
       x: Math.random() * window.innerWidth,
       y: Math.random() * window.innerHeight,
       size: Math.random() * 3 + 1,
-      delay: Math.random() * 2
+      delay: Math.random() * 2,
     }));
   };
 
   const stars = generateStars(100);
 
   return (
-    <motion.div 
+    <motion.div
       className="fixed inset-0 -z-10 overflow-hidden"
       style={{
-        background: isDarkMode 
-          ? 'linear-gradient(135deg, #0d1117, #161b22)' 
-          : 'linear-gradient(135deg, #e6e9f0, #f5f7fa)'
+        background: isDarkMode
+          ? "linear-gradient(135deg, #0d1117, #161b22)"
+          : "linear-gradient(135deg, #e6e9f0, #f5f7fa)",
       }}
     >
       {/* Floating Planets */}
       {[
-        { size: 80, color: 'rgba(59, 130, 246, 0.2)', x: '10%', y: '20%' },
-        { size: 120, color: 'rgba(99, 102, 241, 0.1)', x: '80%', y: '70%' }
+        { size: 80, color: "rgba(59, 130, 246, 0.2)", x: "10%", y: "20%" },
+        { size: 120, color: "rgba(99, 102, 241, 0.1)", x: "80%", y: "70%" },
       ].map((planet, index) => (
         <motion.div
           key={index}
@@ -42,7 +48,7 @@ const AstroBackground: React.FC<{ isDarkMode: boolean }> = ({ isDarkMode }) => {
             backgroundColor: planet.color,
             left: planet.x,
             top: planet.y,
-            transform: `translate(-50%, -50%) rotate(${index * 45}deg)`
+            transform: `translate(-50%, -50%) rotate(${index * 45}deg)`,
           }}
           animate={{
             rotate: 360,
@@ -51,7 +57,7 @@ const AstroBackground: React.FC<{ isDarkMode: boolean }> = ({ isDarkMode }) => {
           transition={{
             duration: 10 + index * 5,
             repeat: Infinity,
-            ease: "linear"
+            ease: "linear",
           }}
         />
       ))}
@@ -64,19 +70,19 @@ const AstroBackground: React.FC<{ isDarkMode: boolean }> = ({ isDarkMode }) => {
           style={{
             width: star.size,
             height: star.size,
-            backgroundColor: isDarkMode ? 'white' : 'rgba(0,0,0,0.2)',
+            backgroundColor: isDarkMode ? "white" : "rgba(0,0,0,0.2)",
             left: star.x,
-            top: star.y
+            top: star.y,
           }}
           animate={{
             opacity: [0.2, 1, 0.2],
-            scale: [0.5, 1, 0.5]
+            scale: [0.5, 1, 0.5],
           }}
           transition={{
             duration: 3,
             delay: star.delay,
             repeat: Infinity,
-            ease: "easeInOut"
+            ease: "easeInOut",
           }}
         />
       ))}
@@ -89,27 +95,29 @@ const AstroBackground: React.FC<{ isDarkMode: boolean }> = ({ isDarkMode }) => {
           style={{
             width: Math.random() * 10 + 5,
             height: Math.random() * 10 + 5,
-            backgroundColor: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
+            backgroundColor: isDarkMode
+              ? "rgba(255,255,255,0.1)"
+              : "rgba(0,0,0,0.05)",
             left: Math.random() * window.innerWidth,
-            top: Math.random() * window.innerHeight
+            top: Math.random() * window.innerHeight,
           }}
           animate={{
             x: [
-              Math.random() * 100 - 50, 
-              Math.random() * 100 - 50, 
-              Math.random() * 100 - 50
+              Math.random() * 100 - 50,
+              Math.random() * 100 - 50,
+              Math.random() * 100 - 50,
             ],
             y: [
-              Math.random() * 100 - 50, 
-              Math.random() * 100 - 50, 
-              Math.random() * 100 - 50
+              Math.random() * 100 - 50,
+              Math.random() * 100 - 50,
+              Math.random() * 100 - 50,
             ],
-            opacity: [0.2, 0.5, 0.2]
+            opacity: [0.2, 0.5, 0.2],
           }}
           transition={{
             duration: 10 + Math.random() * 10,
             repeat: Infinity,
-            ease: "easeInOut"
+            ease: "easeInOut",
           }}
         />
       ))}
@@ -124,6 +132,7 @@ interface Project {
   image: string;
   github: string;
   url?: string | null;
+  techStacks: string[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -153,10 +162,10 @@ interface PortfolioProps {
   adarsh: AdarshProfile;
 }
 
-const Portfolio: React.FC<PortfolioProps> = ({ 
-  projects = [], 
-  skills = [], 
-  adarsh 
+const Portfolio: React.FC<PortfolioProps> = ({
+  projects = [],
+  skills = [],
+  adarsh,
 }) => {
   const [darkMode, setDarkMode] = useState(false);
   const { scrollYProgress } = useScroll();
@@ -191,31 +200,37 @@ const Portfolio: React.FC<PortfolioProps> = ({
   return (
     <div className="relative min-h-screen">
       <AnimatedLandscape isDarkMode={darkMode} />
-      
+
       <motion.div
         className="fixed top-0 left-0 right-0 h-1 bg-blue-500 z-50"
         style={{ scaleX }}
       />
-      
+
       <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Navigation */}
         <nav className="py-6 flex justify-between items-center">
-          <h1 className="text-lg font-bold tracking-tight text-gray-900 dark:text-white md:text-2xl">Adarsh Kumar</h1>
+          <h1 className="text-lg font-bold tracking-tight text-gray-900 dark:text-white md:text-2xl">
+            Adarsh Kumar
+          </h1>
           <div className="flex items-center space-x-4">
-            <Link 
-              href={adarsh.resume} 
-              target="_blank" 
+            <Link
+              href={adarsh.resume}
+              target="_blank"
               className="bg-white/50 dark:bg-gray-400/50 dark:text-white backdrop-blur-md px-3 py-2 rounded-md text-sm font-medium hover:bg-white/70 dark:hover:bg-gray-400/70 transition-colors"
             >
               Résumé
             </Link>
-            <Button 
-              onClick={toggleDarkMode} 
-              variant="ghost" 
-              size="icon" 
+            <Button
+              onClick={toggleDarkMode}
+              variant="ghost"
+              size="icon"
               className="rounded-full bg-white/50 dark:bg-gray-900/50 backdrop-blur-md"
             >
-              {darkMode ? <Sun className="h-5 w-5 text-white" /> : <Moon className="h-5 w-5" />}
+              {darkMode ? (
+                <Sun className="h-5 w-5 text-white" />
+              ) : (
+                <Moon className="h-5 w-5" />
+              )}
             </Button>
           </div>
         </nav>
@@ -224,8 +239,12 @@ const Portfolio: React.FC<PortfolioProps> = ({
         <AnimatedSection>
           <div className="grid md:grid-cols-2 gap-8 mt-2 items-center">
             <div>
-              <h2 className="md:text-4xl text-2xl font-bold mb-4 text-gray-900 dark:text-white">Hello, I'm Adarsh</h2>
-              <p className="md:text-xl text-lg text-gray-700 dark:text-gray-300 mb-4">{adarsh.tagline}</p>
+              <h2 className="md:text-4xl text-2xl font-bold mb-4 text-gray-900 dark:text-white">
+                Hello, I'm Adarsh
+              </h2>
+              <p className="md:text-xl text-lg text-gray-700 dark:text-gray-300 mb-4">
+                {adarsh.tagline}
+              </p>
               <p className="text-gray-800 dark:text-gray-200">{adarsh.bio}</p>
               <div className="flex space-x-4 mt-6">
                 <Link href={adarsh.github} target="_blank">
@@ -258,7 +277,9 @@ const Portfolio: React.FC<PortfolioProps> = ({
         {/* Skills Section */}
         {skills.length > 0 && (
           <AnimatedSection delay={0.2}>
-            <h3 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">Skills</h3>
+            <h3 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">
+              Skills
+            </h3>
             <div className="flex flex-wrap gap-3">
               {skills.map((skill, index) => (
                 <motion.span
@@ -278,7 +299,9 @@ const Portfolio: React.FC<PortfolioProps> = ({
         {/* Projects Section */}
         {projects.length > 0 && (
           <AnimatedSection delay={0.3}>
-            <h3 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">Projects</h3>
+            <h3 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">
+              Projects
+            </h3>
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
               {projects.map((project) => (
                 <motion.div
@@ -297,7 +320,9 @@ const Portfolio: React.FC<PortfolioProps> = ({
                   </div>
                   <div className="p-5">
                     <div className="flex justify-between items-center mb-3">
-                      <h4 className="text-lg font-semibold text-gray-900 dark:text-white">{project.name}</h4>
+                      <h4 className="text-lg font-semibold text-gray-900 dark:text-white">
+                        {project.name}
+                      </h4>
                       <div className="flex space-x-2">
                         <Link href={project.github} target="_blank">
                           <GithubIcon className="h-5 w-5 text-gray-800 dark:text-white hover:text-blue-500" />
@@ -312,6 +337,26 @@ const Portfolio: React.FC<PortfolioProps> = ({
                     <p className="text-sm text-gray-700 dark:text-gray-300 mb-3">
                       {project.description}
                     </p>
+                    {project.techStacks.length > 0 && (
+                      <div className="mt-2">
+                        <h4 className="text-sm font-semibold text-gray-700">
+                          Tech Stacks:
+                        </h4>
+                        <div className="flex flex-wrap gap-2 mt-1">
+                          {project.techStacks.map((stack, index) => (
+                            <span
+                              key={index}
+                              className="bg-gray-200 text-gray-800 text-xs font-medium px-2 py-1 rounded-lg"
+                            >
+                              {stack}
+                            </span>
+                          ))}
+                          
+                        </div>
+                      </div>
+                    )}
+
+                    
                   </div>
                 </motion.div>
               ))}

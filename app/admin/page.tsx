@@ -35,6 +35,7 @@ interface Project {
   image: string;
   github: string;
   url: string;
+  techStacks?: string[];
 }
 
 interface Skill {
@@ -65,6 +66,7 @@ const AdminDashboard: React.FC = () => {
     image: "",
     github: "",
     url: "",
+    techStacks: [],
   });
   const [editProject, setEditProject] = useState<Project | null>(null);
 
@@ -197,6 +199,7 @@ const AdminDashboard: React.FC = () => {
         image: "",
         github: "",
         url: "",
+        techStacks: [],
       });
       router.refresh();
     } catch (error) {
@@ -356,6 +359,29 @@ const AdminDashboard: React.FC = () => {
                   }
                   className="border p-2 rounded"
                 />
+                <input
+                  placeholder="Techstacks used (comma-separated)"
+                  value={
+                    editProject?.techStacks?.join(", ") ||
+                    newProject.techStacks?.join(", ")
+                  }
+                  onChange={(e) => {
+                    const techStacksArray = e.target.value
+                      .split(",")
+                      .map((stack) => stack.trim());
+                    editProject
+                      ? setEditProject({
+                          ...editProject,
+                          techStacks: techStacksArray,
+                        })
+                      : setNewProject({
+                          ...newProject,
+                          techStacks: techStacksArray,
+                        });
+                  }}
+                  className="border p-2 rounded"
+                />
+
                 <input
                   placeholder="Project URL"
                   value={editProject?.url || newProject.url}
